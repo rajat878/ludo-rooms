@@ -128,11 +128,19 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 .pc .ds{width:50px;height:50px}.pc .dice{width:48px;height:48px;padding:6px;border-radius:13px}
 .pc.on .ds{width:54px;height:54px}.pc.on .dice{width:52px;height:52px;padding:7px;border-radius:14px}
 .pc{padding:6px 8px 6px 8px;gap:4px}
+
+/* ---------- finish ranking ---------- */
+.pc.fin{opacity:.75}
+.rk{display:flex;flex-direction:column;gap:6px;text-align:left}
+.rkr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.07);border-left:5px solid var(--c);font-size:16px}
+.rkr .md{font-size:24px;width:30px;text-align:center}
+.rkr b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 </style></head>
 <body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const COLORS=['red','green','yellow','blue'];
+const MEDALS=['🥇','🥈','🥉','4️⃣'],ORD=['1st','2nd','3rd','4th'],ROLL_MS=450;
 const HEX={red:'#e5483f',green:'#2fa84f',yellow:'#f2b705',blue:'#2f7de1'};
 const LIGHT={red:'#ff9a90',green:'#8be8a2',yellow:'#ffe58a',blue:'#9ccbff'};
 const START={red:0,green:13,yellow:26,blue:39};
@@ -161,7 +169,7 @@ const err=m=>{const e=document.getElementById('msg');if(e)e.textContent=m};
 let AC=null,mute=ls.get('ludo.mute')==='1';
 function unlock(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}catch(e){}}
 function tone(f,d,type,v,w){if(mute||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(w||0);o.type=type||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
-const sfx={roll(){for(let k=0;k<6;k++)tone(200+Math.random()*300,.05,'square',.05,k*.11)},hop(){tone(540,.07,'triangle',.14)},
+const sfx={roll(){for(let k=0;k<4;k++)tone(200+Math.random()*300,.05,'square',.05,k*.09)},hop(){tone(540,.07,'triangle',.14)},
 cap(){tone(330,.12,'sawtooth',.09);tone(160,.25,'sawtooth',.09,.1)},home(){tone(660,.1,'sine',.15);tone(880,.2,'sine',.15,.1)},
 nomove(){tone(240,.2,'sawtooth',.07);tone(180,.25,'sawtooth',.07,.15)},
 turn(){tone(780,.08,'sine',.1);tone(1040,.1,'sine',.1,.09)},win(){[523,659,784,1047].forEach((f,k)=>tone(f,.28,'triangle',.15,k*.14))}};
@@ -169,7 +177,7 @@ document.addEventListener('pointerdown',unlock);
 
 /* ---------- connection ---------- */
 const socket=io();
-let lastHold=null,state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
+let lastFin=0,lastHold=null,state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
 let shown=null,tgt=null,jobs=[],cur=null,diceUntil=0,rollStart=0,raf=0,shuf=0,shufC=null,resD=null,shufStart=0;
 const hist={red:1,green:1,yellow:1,blue:1};
 const rolling=()=>!!shuf||performance.now()<diceUntil;
@@ -182,15 +190,21 @@ socket.on('state',S=>{
   const first=!state||S.code!==lastCode;
   state=S;recv=Date.now();
   const snap=first||(S.status==='playing'&&lastStatus!=='playing')||S.status==='lobby';
+  if(snap)lastFin=(S.finished||[]).length;
+  else if((S.finished||[]).length>lastFin){
+    lastFin=S.finished.length;
+    if(S.status!=='done'){const c=S.finished[S.finished.length-1],k=S.finished.length-1;
+      setTimeout(()=>{toast(`${MEDALS[k]} ${nm(S,c)} finished ${ORD[k]}!`);sfx.home()},900)}
+  }
   if(snap){shown=clone(S.tokens);tgt=clone(S.tokens);jobs=[];cur=null;lastRoll=S.rollSeq;celebrated=false}
   else{
-    if(S.rollSeq>lastRoll){lastRoll=S.rollSeq;const n=performance.now();if(n-rollStart>1500){rollStart=n;sfx.roll()}diceUntil=rollStart+750;startShuffle(S.last.c,S.last.d)}
+    if(S.rollSeq>lastRoll){lastRoll=S.rollSeq;const n=performance.now();if(n-rollStart>600){rollStart=n;sfx.roll()}diceUntil=rollStart+ROLL_MS;startShuffle(S.last.c,S.last.d)}
     S.order.forEach(c=>S.tokens[c].forEach((p,i)=>{if(tgt[c][i]!==p){jobs.push({c,i,from:tgt[c][i],to:p});tgt[c][i]=p}}));
     jobs.sort((a,b)=>(b.to>=0)-(a.to>=0));
   }
-  if(S.hold&&S.hold!==lastHold&&!snap)setTimeout(sfx.nomove,800);lastHold=S.hold;
+  if(S.hold&&S.hold!==lastHold&&!snap)setTimeout(sfx.nomove,400);lastHold=S.hold;
   if(S.last)hist[S.last.c]=S.last.d;
-  if(S.status==='playing'&&S.turn===S.me&&lastTurn!==S.turn&&!snap)setTimeout(sfx.turn,700);
+  if(S.status==='playing'&&S.turn===S.me&&lastTurn!==S.turn&&!snap)setTimeout(sfx.turn,350);
   lastTurn=S.turn;lastStatus=S.status;lastCode=S.code;
   render();kick();maybeCelebrate();
 });
@@ -281,7 +295,7 @@ document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state)wak
 function canRollNow(){const S=state;return !!S&&S.status==='playing'&&S.turn===S.me&&S.dice==null&&!S.hold&&!animating()}
 function rollTap(){
   if(!canRollNow())return;
-  rollStart=performance.now();diceUntil=rollStart+750;sfx.roll();startShuffle(state.me,null);kick();socket.emit('roll');
+  rollStart=performance.now();diceUntil=rollStart+ROLL_MS;sfx.roll();startShuffle(state.me,null);kick();socket.emit('roll');
 }
 function tap(c,i){if(state&&c===state.me&&!animating()&&state.dice!=null&&state.movable.includes(i))socket.emit('move',i)}
 function start(){socket.emit('start')}
@@ -309,9 +323,9 @@ function startShuffle(c,d){
 /* ---------- token animation ---------- */
 function kick(){if(!raf)raf=requestAnimationFrame(frame)}
 function buildSteps(j,c,i){
-  if(j.to<0)return[{p:-1,dur:450,sfx:sfx.cap,kind:'back'}];
-  if(j.from<0)return[{p:0,dur:280,sfx:sfx.hop,kind:'out'}];
-  const s=[];for(let p=j.from+1;p<=j.to;p++)s.push({p,dur:180,sfx:p===56?sfx.home:sfx.hop,kind:'hop'});return s;
+  if(j.to<0)return[{p:-1,dur:300,sfx:sfx.cap,kind:'back'}];
+  if(j.from<0)return[{p:0,dur:180,sfx:sfx.hop,kind:'out'}];
+  const s=[];for(let p=j.from+1;p<=j.to;p++)s.push({p,dur:110,sfx:p===56?sfx.home:sfx.hop,kind:'hop'});return s;
 }
 function frame(){
   raf=0;const now=performance.now();
@@ -407,8 +421,9 @@ function playerCard(S,c){
   const p=S.players[c];if(!p)return '<div></div>';
   const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!S.hold&&!animating(),held=on&&!!S.hold;
   const face=rl?1+Math.floor(Math.random()*6):hist[c];
-  const sub=on?(held?'':'<span id="tm"></span>'):(p.auto?'🤖':c===me?'You':(p.on?'':'📴'));
-  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38"><div class="pa">${avFace(c,56)}<div class="pn">${esc(p.name)}</div></div><div class="pi"><div class="ps">${sub}</div></div>
+  const fin=(S.finished||[]).indexOf(c);
+  const sub=fin>=0?`<span style="font-size:26px">${MEDALS[fin]}</span>`:on?(held?'':'<span id="tm"></span>'):(p.auto?'🤖':c===me?'You':(p.on?'':'📴'));
+  return `<div class="pc ${on?'on':''} ${fin>=0?'fin':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38"><div class="pa">${avFace(c,56)}<div class="pn">${esc(p.name)}</div></div><div class="pi"><div class="ps">${sub}</div></div>
   <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${held?'held':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
@@ -425,7 +440,9 @@ function render(){
     const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:S.hold==='none'?`😕 ${esc(nm(S,S.turn))} rolled ${S.last?S.last.d:''}: no move possible`:S.hold==='sixes'?'🚫 Three 6s in a row: turn lost':mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
     <div class="foot"><div class="status" style="--c:${HEX[S.status==='done'?S.winner:S.turn]};--ca:${HEX[S.status==='done'?S.winner:S.turn]}33">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
-    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="display:flex;justify-content:center">${avFace(S.winner,84)}</div><div style="font-size:40px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
+    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:40px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2>
+<div class="rk">${(S.finished||[]).map((c,k)=>`<div class="rkr" style="--c:${HEX[c]}"><span class="md">${MEDALS[k]}</span>${avFace(c,34)}<b>${esc(nm(S,c))}</b></div>`).join('')}</div>
+<button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
   }
   app.innerHTML=h;
   const $=id=>document.getElementById(id);
