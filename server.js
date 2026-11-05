@@ -1,177 +1,220 @@
+'use strict';
 const express = require('express');
 const http = require('http');
+const crypto = require('crypto');
 const { Server } = require('socket.io');
+const E = require('./rules');
+const { COLORS } = E;
 
 const app = express();
+app.disable('x-powered-by');
+app.use((req, res, next) => {
+  res.set({ 'X-Content-Type-Options': 'nosniff', 'Referrer-Policy': 'no-referrer', 'X-Frame-Options': 'SAMEORIGIN' });
+  next();
+});
 app.use(express.static(__dirname + '/public'));
+app.get('/healthz', (req, res) => res.send('ok'));
 const server = http.createServer(app);
-const io = new Server(server);
+const io = new Server(server, { maxHttpBufferSize: 1e4, pingInterval: 10000, pingTimeout: 8000 });
 
-const COLORS = ['red', 'green', 'yellow', 'blue'];
-const START = { red: 0, green: 13, yellow: 26, blue: 39 };
-const SAFE = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
-const abs = (c, p) => (START[c] + p) % 52;
-const fresh = () => ({ red: [-1,-1,-1,-1], green: [-1,-1,-1,-1], yellow: [-1,-1,-1,-1], blue: [-1,-1,-1,-1] });
 const rooms = new Map();
+const MAX_ROOMS = 300;
+const REACTIONS = ['😂', '👏', '😡', '🔥', '❤️', '😭'];
 
-/* ---------- rules (the server is the only place they run) ---------- */
-function movable(R, c, d) {
-  const r = [];
-  R.tokens[c].forEach((p, i) => { if (p < 0) { if (d === 6) r.push(i); } else if (p + d <= 56) r.push(i); });
-  return r;
+/* ---------- identity: the server issues a secret per seat and keeps only its hash ---------- */
+const sha = t => crypto.createHash('sha256').update(t).digest();
+const newToken = () => crypto.randomBytes(24).toString('hex');
+const same = (a, b) => a.length === b.length && crypto.timingSafeEqual(a, b);
+function seatByToken(R, token) {
+  if (typeof token !== 'string' || token.length < 32 || token.length > 64) return null;
+  const h = sha(token);
+  return COLORS.find(c => R.players[c] && same(R.players[c].th, h)) || null;
 }
-const nm = (R, c) => R.players[c].name;
-const nextTurn = (R, c) => R.order[(R.order.indexOf(c) + 1) % R.order.length];
+const clean = s => String(typeof s === 'string' ? s : 'Player').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12) || 'Player';
+const isObj = o => !!o && typeof o === 'object' && !Array.isArray(o);
+const mkCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ'[crypto.randomInt(0, 23)]).join('');
 
-function applyMove(R, c, i, d) {
-  const T = R.tokens;
-  let p = T[c][i]; p = p < 0 ? 0 : p + d; T[c][i] = p;
-  let cap = null;
-  if (p <= 50 && !SAFE.has(abs(c, p))) {
-    R.order.forEach(o => {
-      if (o === c) return;
-      const hits = [];
-      T[o].forEach((q, j) => { if (q >= 0 && q <= 50 && abs(o, q) === abs(c, p)) hits.push(j); });
-      if (hits.length === 1) { T[o][hits[0]] = -1; cap = o; }
-    });
-  }
-  R.dice = null; R.movable = []; R.last = { c, d };
-  let msg = `${nm(R, c)} moved ${d}`;
-  if (cap) msg += `, sent ${nm(R, cap)} home`;
-  if (p === 56) msg += ', a token got home!';
-  if (T[c].every(q => q === 56)) { R.status = 'done'; R.winner = c; R.log = `${nm(R, c)} wins!`; return; }
-  R.turn = (d === 6 || cap || p === 56) ? c : nextTurn(R, c);
-  R.log = msg;
-}
-
-const TURN_MS = +process.env.TURN_MS || 25000;
-function arm(R) {
-  const p = R.players[R.turn];
-  R.turnMs = p && p.on ? (R.dice != null ? 12000 : TURN_MS) : 2500;
-  R.deadline = Date.now() + R.turnMs;
-  R.seq = (R.seq || 0) + 1; R.touched = Date.now();
-}
-function doRoll(R, c) {
-  const d = 1 + Math.floor(Math.random() * 6), mv = movable(R, c, d);
-  R.last = { c, d }; R.rollSeq = (R.rollSeq || 0) + 1;
-  if (mv.length === 1) applyMove(R, c, mv[0], d);
-  else if (mv.length === 0) { R.log = `${nm(R, c)} rolled ${d}, no move`; R.turn = nextTurn(R, c); }
-  else { R.dice = d; R.movable = mv; R.log = `${nm(R, c)} rolled ${d}`; }
-  arm(R); broadcast(R);
-}
-function doPick(R, c, i) { applyMove(R, c, i, R.dice); arm(R); broadcast(R); }
-
-/* ---------- rooms ---------- */
+/* ---------- views ---------- */
 function view(R, color) {
   const players = {};
-  COLORS.forEach(c => { if (R.players[c]) players[c] = { name: R.players[c].name, on: R.players[c].on }; });
+  COLORS.forEach(c => { const p = R.players[c]; if (p) players[c] = { name: p.name, on: p.on, auto: !!(p.auto || p.left) }; });
   return {
-    code: R.code, status: R.status, players, order: R.order, turn: R.turn, dice: R.dice,
-    movable: R.movable, last: R.last, log: R.log, winner: R.winner, tokens: R.tokens,
-    seq: R.seq || 0, rollSeq: R.rollSeq || 0,
+    code: R.code, status: R.status, players, order: R.order, turn: R.turn, dice: R.dice, movable: R.movable,
+    last: R.last, log: R.log, winner: R.winner, tokens: R.tokens, rules: R.rules,
+    rematch: R.votes ? [...R.votes] : [], seq: R.seq || 0, rollSeq: R.rollSeq || 0,
     left: R.status === 'playing' ? Math.max(0, Math.ceil((R.deadline - Date.now()) / 1000)) : 0,
-    tot: Math.round((R.turnMs || TURN_MS) / 1000),
-    me: color, isHost: R.players[color] && R.players[color].pid === R.host
+    tot: Math.round((R.turnMs || 25000) / 1000), me: color, isHost: color === R.host
   };
 }
 function broadcast(R) {
   COLORS.forEach(c => { const p = R.players[c]; if (p && p.sid) io.to(p.sid).emit('state', view(R, c)); });
 }
+
+/* ---------- turn timer ---------- */
+function arm(R) {
+  const p = R.players[R.turn]; let s;
+  if (!p || p.left || p.auto) s = 2;
+  else if (!p.on) s = Math.max(1, R.rules.offlineGraceSeconds);
+  else s = R.dice != null ? R.rules.pickSeconds : R.rules.turnSeconds;
+  R.turnMs = s * 1000; R.deadline = Date.now() + R.turnMs; R.seq = (R.seq || 0) + 1; R.touched = Date.now();
+}
+function tick(now = Date.now()) {
+  for (const R of rooms.values()) {
+    if (R.status !== 'playing' || now < R.deadline) continue;
+    const c = R.turn, p = R.players[c], bot = p.left || p.auto;
+    if (!bot) {
+      p.misses = (p.misses || 0) + 1;
+      if (R.rules.autopilotAfterMisses && p.misses >= R.rules.autopilotAfterMisses) p.auto = true;
+    }
+    if (!bot && R.rules.onTimeout === 'skip') {
+      R.dice = null; R.movable = []; R.sixes = 0; R.turn = E.nextTurn(R, c); R.log = `${p.name} ran out of time`;
+    } else if (R.dice == null) E.rollDie(R, c);
+    else E.applyMove(R, c, E.chooseMove(R, c, R.dice, R.movable), R.dice);
+    arm(R); broadcast(R);
+  }
+}
+
+/* ---------- seats ---------- */
+function detach(socket) {
+  const d = socket.data || {}, R = rooms.get(d.code);
+  socket.data = {};
+  if (!R) return;
+  socket.leave(R.code);
+  const p = R.players[d.color];
+  if (p && p.sid === socket.id) { p.on = false; p.sid = null; broadcast(R); checkRematch(R); }
+}
 function attach(socket, R, color) {
+  if (socket.data && socket.data.code) detach(socket);
   const p = R.players[color];
-  p.on = true; p.sid = socket.id; R.touched = Date.now();
-  socket.join(R.code); socket.data = { code: R.code, color };
+  if (p.sid && p.sid !== socket.id) {          // the seat is already open somewhere else: that connection is dropped
+    const old = io.sockets.sockets.get(p.sid);
+    if (old) { old.emit('kicked', 'This seat was opened on another device'); old.data = {}; old.leave(R.code); }
+  }
+  Object.assign(p, { on: true, sid: socket.id, left: false, auto: false, misses: 0 });
+  socket.data = { code: R.code, color }; socket.join(R.code); R.touched = Date.now();
   socket.emit('chatlog', R.chat || []);
   broadcast(R);
 }
-const clean = s => String(s || 'Player').replace(/[<>]/g, '').trim().slice(0, 12) || 'Player';
+/* Only the socket currently bound to a seat may act for it. */
+function ctx(socket) {
+  const d = socket.data || {}, R = rooms.get(d.code);
+  const p = R && R.players[d.color];
+  return p && p.sid === socket.id ? { R, c: d.color, p } : null;
+}
+function seat(R, name) {
+  const token = newToken(), color = COLORS.find(c => !R.players[c]);
+  R.players[color] = { name: clean(name), th: sha(token), on: false, sid: null, left: false, auto: false, misses: 0 };
+  return { color, token };
+}
 
+/* ---------- rematch: restarts when every connected player has voted ---------- */
+function checkRematch(R) {
+  if (R.status !== 'done' || !R.votes) return;
+  const online = COLORS.filter(c => R.players[c] && R.players[c].on && !R.players[c].left);
+  if (online.length < 2 || !online.every(c => R.votes.has(c))) return broadcast(R);
+  COLORS.forEach(c => { if (R.players[c] && !online.includes(c)) delete R.players[c]; });
+  R.order = COLORS.filter(c => R.players[c]);
+  if (!R.players[R.host]) R.host = R.order[0];
+  const first = R.order[((R.order.indexOf(R.starter) + 1) || 0) % R.order.length];
+  R.starter = first; R.votes = null; E.startGame(R, first); R.log = 'Rematch! New game started';
+  arm(R); broadcast(R);
+}
+
+/* ---------- sockets ---------- */
 io.on('connection', socket => {
-  const ctx = () => { const R = rooms.get(socket.data && socket.data.code); return R ? { R, c: socket.data.color } : null; };
+  let bucket = 25, stamp = Date.now();                       // flood protection: ~10 events/sec, bursts of 25
+  socket.use((pkt, next) => {
+    const n = Date.now(); bucket = Math.min(25, bucket + (n - stamp) / 100); stamp = n;
+    if (bucket < 1) return next(new Error('slow down')); bucket--; next();
+  });
+  socket.on('error', () => {});
+  const ack = cb => (typeof cb === 'function' ? cb : () => {});
 
-  socket.on('create', ({ name, pid }, cb) => {
-    let code;
-    do { code = Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ'[Math.floor(Math.random() * 23)]).join(''); } while (rooms.has(code));
-    const R = { code, host: pid, status: 'lobby', players: { red: { pid, name: clean(name), on: false } }, order: [], turn: 'red',
-      dice: null, movable: [], last: null, log: 'Room created', winner: null, tokens: fresh(), touched: Date.now() };
-    rooms.set(code, R); attach(socket, R, 'red'); cb && cb({ code });
+  socket.on('create', (msg, cb) => {
+    cb = ack(cb); if (!isObj(msg)) return cb({ error: 'Bad request' });
+    if (rooms.size >= MAX_ROOMS) return cb({ error: 'Server is busy, try again later' });
+    let code; do { code = mkCode(); } while (rooms.has(code));
+    const R = { code, host: 'red', status: 'lobby', players: {}, order: [], turn: 'red', dice: null, movable: [], last: null,
+      log: 'Room created', winner: null, tokens: E.fresh(), rules: { ...E.DEFAULT_RULES }, sixes: 0, miss: {}, rollSeq: 0, seq: 0, touched: Date.now(), chat: [] };
+    rooms.set(code, R);
+    const { color, token } = seat(R, msg.name); attach(socket, R, color); cb({ code, token });
   });
 
-  socket.on('join', ({ code, name, pid }, cb) => {
-    const R = rooms.get(String(code || '').toUpperCase());
-    if (!R) return cb && cb({ error: 'No room with that code' });
-    let color = COLORS.find(c => R.players[c] && R.players[c].pid === pid);
-    if (!color) {
-      if (R.status !== 'lobby') return cb && cb({ error: 'That game has already started' });
-      color = COLORS.find(c => !R.players[c]);
-      if (!color) return cb && cb({ error: 'Room is full' });
-      R.players[color] = { pid, name: clean(name), on: false };
-    }
-    attach(socket, R, color); cb && cb({ code: R.code });
+  socket.on('join', (msg, cb) => {
+    cb = ack(cb); if (!isObj(msg)) return cb({ error: 'Bad request' });
+    const code = typeof msg.code === 'string' ? msg.code.toUpperCase() : '';
+    const R = /^[A-Z]{4}$/.test(code) ? rooms.get(code) : null;
+    if (!R) return cb({ error: 'No room with that code' });
+    const mine = seatByToken(R, msg.token);
+    if (mine) { attach(socket, R, mine); return cb({ code }); }          // authenticated rejoin
+    if (R.status !== 'lobby') return cb({ error: 'That game has already started' });
+    if (!COLORS.some(c => !R.players[c])) return cb({ error: 'Room is full' });
+    const { color, token } = seat(R, msg.name); attach(socket, R, color); cb({ code, token });
+  });
+
+  socket.on('rules', msg => {
+    const x = ctx(socket); if (!x || x.c !== x.R.host || x.R.status !== 'lobby' || !isObj(msg)) return;
+    x.R.rules = E.sanitizeRules(msg, x.R.rules); broadcast(x.R);
   });
 
   socket.on('start', () => {
-    const x = ctx(); if (!x || x.R.players[x.c].pid !== x.R.host) return;
-    const R = x.R; if (R.status === 'playing') return;
-    R.order = COLORS.filter(c => R.players[c]); if (R.order.length < 2) return;
-    Object.assign(R, { status: 'playing', turn: R.order[0], tokens: fresh(), dice: null, movable: [], last: null, winner: null, log: 'Game started' });
-    arm(R); broadcast(R);
+    const x = ctx(socket); if (!x || x.c !== x.R.host || x.R.status !== 'lobby') return;
+    const R = x.R; R.order = COLORS.filter(c => R.players[c]); if (R.order.length < 2) return;
+    R.starter = R.order[0]; E.startGame(R, R.order[0]); arm(R); broadcast(R);
+  });
+
+  socket.on('rematch', () => {
+    const x = ctx(socket); if (!x || x.R.status !== 'done') return;
+    (x.R.votes = x.R.votes || new Set()).add(x.c); checkRematch(x.R);
   });
 
   socket.on('roll', () => {
-    const x = ctx(); if (!x) return; const { R, c } = x;
+    const x = ctx(socket); if (!x) return; const { R, c, p } = x;
     if (R.status !== 'playing' || R.turn !== c || R.dice != null) return;
-    doRoll(R, c);
+    p.misses = 0; p.auto = false; E.rollDie(R, c); arm(R); broadcast(R);
   });
 
   socket.on('move', i => {
-    const x = ctx(); if (!x) return; const { R, c } = x;
+    const x = ctx(socket); if (!x || !Number.isInteger(i)) return; const { R, c, p } = x;
     if (R.status !== 'playing' || R.turn !== c || R.dice == null || !R.movable.includes(i)) return;
-    doPick(R, c, i);
+    p.misses = 0; p.auto = false; E.applyMove(R, c, i, R.dice); arm(R); broadcast(R);
   });
 
   socket.on('chat', text => {
-    const x = ctx(); if (!x) return; const { R, c } = x; const now = Date.now();
-    if (now - (socket.data.lt || 0) < 500) return; socket.data.lt = now;
-    text = String(text || '').replace(/[<>]/g, '').trim().slice(0, 140); if (!text) return;
-    const m = { c, name: nm(R, c), text, t: now };
-    (R.chat = R.chat || []).push(m); if (R.chat.length > 50) R.chat.shift();
+    const x = ctx(socket); if (!x || typeof text !== 'string') return; const { R, c } = x, now = Date.now();
+    if (now - (x.p.lastChat || 0) < 500) return; x.p.lastChat = now;
+    text = text.replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 140); if (!text) return;
+    const m = { c, name: x.p.name, text, t: now };
+    R.chat.push(m); if (R.chat.length > 50) R.chat.shift();
     R.touched = now; io.to(R.code).emit('chat', m);
   });
 
   socket.on('react', e => {
-    const x = ctx(); if (!x || !['😂','👏','😡','🔥','❤️','😭'].includes(e)) return; const now = Date.now();
-    if (now - (socket.data.lr || 0) < 400) return; socket.data.lr = now;
+    const x = ctx(socket); if (!x || !REACTIONS.includes(e)) return; const now = Date.now();
+    if (now - (x.p.lastReact || 0) < 400) return; x.p.lastReact = now;
     io.to(x.R.code).emit('react', { c: x.c, e });
   });
 
   socket.on('leave', () => {
-    const x = ctx(); if (!x) return; const { R, c } = x;
-    socket.leave(R.code); socket.data = {};
+    const x = ctx(socket); if (!x) return; const { R, c } = x;
     if (R.status === 'lobby') {
-      const wasHost = R.players[c].pid === R.host; delete R.players[c];
+      detach(socket); delete R.players[c];
       const next = COLORS.find(k => R.players[k]);
-      if (!next) rooms.delete(R.code); else { if (wasHost) R.host = R.players[next].pid; broadcast(R); }
-    } else { R.players[c].on = false; R.players[c].sid = null; broadcast(R); }
+      if (!next) rooms.delete(R.code); else { if (c === R.host) R.host = next; broadcast(R); }
+    } else {
+      x.p.left = true; detach(socket);                                   // seat stays; the server plays for them
+      if (COLORS.every(k => !R.players[k] || R.players[k].left)) rooms.delete(R.code);
+    }
   });
 
-  socket.on('disconnect', () => {
-    const x = ctx(); if (!x) return; const p = x.R.players[x.c];
-    if (p && p.sid === socket.id) { p.on = false; p.sid = null; broadcast(x.R); }
-  });
+  socket.on('disconnect', () => detach(socket));
 });
 
-// turn timer: idle or offline players are played automatically
-setInterval(() => {
-  const now = Date.now();
-  for (const R of rooms.values()) {
-    if (R.status !== 'playing' || now < R.deadline) continue;
-    if (R.dice == null) doRoll(R, R.turn); else doPick(R, R.turn, R.movable[Math.floor(Math.random() * R.movable.length)]);
-  }
-}, 500);
+function cleanup() { for (const [k, R] of rooms) if (Date.now() - R.touched > 6 * 3600e3) rooms.delete(k); }
+const start = port => new Promise(r => server.listen(port, () => r(server.address().port)));
 
-// forget rooms nobody has touched for 6 hours
-setInterval(() => { for (const [k, R] of rooms) if (Date.now() - R.touched > 6 * 3600e3) rooms.delete(k); }, 600e3);
-
-const PORT = process.env.PORT || 3000;
-server.listen(PORT, () => console.log('Ludo running on port ' + PORT));
+if (require.main === module) {
+  start(process.env.PORT || 3000).then(p => console.log('Ludo running on port ' + p));
+  setInterval(() => tick(), 500); setInterval(cleanup, 600e3);
+}
+module.exports = { server, io, rooms, tick, start, E };
