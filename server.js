@@ -47,7 +47,8 @@ function applyMove(R, c, i, d) {
 const TURN_MS = +process.env.TURN_MS || 25000;
 function arm(R) {
   const p = R.players[R.turn];
-  R.deadline = Date.now() + (p && p.on ? (R.dice != null ? 12000 : TURN_MS) : 2500);
+  R.turnMs = p && p.on ? (R.dice != null ? 12000 : TURN_MS) : 2500;
+  R.deadline = Date.now() + R.turnMs;
   R.seq = (R.seq || 0) + 1; R.touched = Date.now();
 }
 function doRoll(R, c) {
@@ -69,6 +70,7 @@ function view(R, color) {
     movable: R.movable, last: R.last, log: R.log, winner: R.winner, tokens: R.tokens,
     seq: R.seq || 0, rollSeq: R.rollSeq || 0,
     left: R.status === 'playing' ? Math.max(0, Math.ceil((R.deadline - Date.now()) / 1000)) : 0,
+    tot: Math.round((R.turnMs || TURN_MS) / 1000),
     me: color, isHost: R.players[color] && R.players[color].pid === R.host
   };
 }
@@ -79,6 +81,7 @@ function attach(socket, R, color) {
   const p = R.players[color];
   p.on = true; p.sid = socket.id; R.touched = Date.now();
   socket.join(R.code); socket.data = { code: R.code, color };
+  socket.emit('chatlog', R.chat || []);
   broadcast(R);
 }
 const clean = s => String(s || 'Player').replace(/[<>]/g, '').trim().slice(0, 12) || 'Player';
@@ -125,6 +128,21 @@ io.on('connection', socket => {
     const x = ctx(); if (!x) return; const { R, c } = x;
     if (R.status !== 'playing' || R.turn !== c || R.dice == null || !R.movable.includes(i)) return;
     doPick(R, c, i);
+  });
+
+  socket.on('chat', text => {
+    const x = ctx(); if (!x) return; const { R, c } = x; const now = Date.now();
+    if (now - (socket.data.lt || 0) < 500) return; socket.data.lt = now;
+    text = String(text || '').replace(/[<>]/g, '').trim().slice(0, 140); if (!text) return;
+    const m = { c, name: nm(R, c), text, t: now };
+    (R.chat = R.chat || []).push(m); if (R.chat.length > 50) R.chat.shift();
+    R.touched = now; io.to(R.code).emit('chat', m);
+  });
+
+  socket.on('react', e => {
+    const x = ctx(); if (!x || !['😂','👏','😡','🔥','❤️','😭'].includes(e)) return; const now = Date.now();
+    if (now - (socket.data.lr || 0) < 400) return; socket.data.lr = now;
+    io.to(x.R.code).emit('react', { c: x.c, e });
   });
 
   socket.on('leave', () => {
