@@ -13,7 +13,7 @@
 *{-webkit-tap-highlight-color:transparent}
 html{scroll-padding-top:env(safe-area-inset-top,0px);background:#14141c}
 body{margin:0;color:var(--fg);font:16px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none;
-background:radial-gradient(120% 80% at 50% -10%,#303466 0%,#14141c 62%) fixed,#14141c}
+background:radial-gradient(60% 38% at 0% 0%,rgba(229,72,63,.17),transparent),radial-gradient(60% 38% at 100% 0%,rgba(47,168,79,.17),transparent),radial-gradient(60% 38% at 0% 100%,rgba(47,125,225,.17),transparent),radial-gradient(60% 38% at 100% 100%,rgba(242,183,5,.14),transparent),radial-gradient(120% 80% at 50% -10%,#303466 0%,#14141c 62%) fixed,#14141c}
 #app{height:var(--vh);max-width:640px;margin:0 auto;padding:6px 8px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
 h1{margin:6px 0 2px;font-size:30px}.sub{color:var(--mut);margin:0 0 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:auto 0}
@@ -33,18 +33,18 @@ button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7d
 .pi{flex:1;min-width:0}.pn{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps{font-size:11px;color:var(--mut);min-height:14px}
 .ds{width:60px;height:60px;flex:none;display:grid;place-items:center}.tb{position:absolute;left:0;bottom:0;right:0;height:4px;background:rgba(255,255,255,.08)}.tb i{display:block;height:100%;width:100%;background:var(--c);transition:width .25s linear}
 .bwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-.board{width:min(100%,calc(var(--vh) - 264px));height:auto;display:block;border-radius:16px;background:#22222c;box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.07);touch-action:manipulation}
+.board{width:min(100%,calc(var(--vh) - 264px));height:auto;display:block;border-radius:16px;background:#22222c;box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.07),0 0 46px -8px var(--tc,transparent);transition:box-shadow .4s;touch-action:manipulation}
 .foot{text-align:center;flex:none;min-height:40px}.status{font-weight:800}.log{color:var(--mut);font-size:13px}
 .dice{width:58px;height:58px;box-sizing:border-box;border-radius:15px;background:linear-gradient(145deg,#fff,#d9d5ca);border:3px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28),0 8px 14px rgba(0,0,0,.35);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;gap:2px;color:#222}
 .dice i{border-radius:50%}.dice i.p{background:radial-gradient(circle at 35% 30%,#555,#111)}.dice b{grid-area:1/1/4/4;display:grid;place-items:center;font-size:12px;letter-spacing:.05em}
 .dice.my{cursor:pointer;animation:bob 1s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-4px) scale(1.1)}}
 .dice.roll{animation:shake .14s linear infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-5px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-5px)}}
-.dice.idle{opacity:.6;transform:scale(.88)}
+.dice.idle{opacity:.92;transform:scale(.92)}
 .dice.my{box-shadow:0 0 0 3px var(--c,#fff),0 4px 0 rgba(0,0,0,.28),0 8px 18px rgba(0,0,0,.4)}
 .bobpin{animation:bobpin .7s ease-in-out infinite}@keyframes bobpin{50%{transform:translateY(-.12px)}}
 .pc .pi .ps{white-space:normal;line-height:1.15}
 h1 b,.brand{letter-spacing:.02em}
-.pc.on .ds{width:70px;height:70px}.pc.on .dice{width:68px;height:68px;border-radius:17px;padding:9px}
+.pc.on .ds{width:64px;height:64px}.pc.on .dice{width:62px;height:62px;border-radius:16px;padding:8px}
 .dice.held{animation:none!important;box-shadow:0 0 0 4px #ff7a70,0 4px 0 rgba(0,0,0,.28),0 8px 18px rgba(0,0,0,.4)}
 .by{letter-spacing:.32em;font-size:11px;font-weight:700;color:var(--mut);margin:0 0 14px 2px}
 .credit{text-align:center;color:var(--mut);font-size:12px;letter-spacing:.08em;margin:12px 0 4px}
@@ -101,6 +101,14 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 .lob .rules{width:100%}
 @media (max-height:700px){.logo span{font-size:60px}.hm{gap:10px}}
 @media (prefers-reduced-motion:reduce){#bg .bl,#bg .fz,.logo span,.hpins svg{animation:none}}
+.pc{background:linear-gradient(135deg,var(--ca,rgba(255,255,255,.08)),rgba(255,255,255,.04) 75%)}
+.pc.on{animation:pcg 1.6s ease-in-out infinite;background:linear-gradient(135deg,var(--ca),rgba(255,255,255,.1) 80%)}
+@keyframes pcg{50%{box-shadow:0 0 30px 0 var(--c)}}
+.pc .pn{font-size:14px}
+.bar .ib{width:34px;height:34px;font-size:15px}.btns{gap:5px}
+.bm{flex:1;min-width:0;text-align:center;line-height:1.1}.bn{font-size:15px;font-weight:900;letter-spacing:.02em}.bb{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-top:2px;white-space:nowrap}
+.status{display:inline-block;padding:7px 18px;border-radius:999px;background:var(--ca,rgba(255,255,255,.1));border:1.5px solid var(--c,#555);box-shadow:0 0 20px -4px var(--c,transparent);font-size:15px;margin-bottom:2px}
+@media (prefers-reduced-motion:reduce){.pc.on{animation:none}}
 </style></head>
 <body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
@@ -304,7 +312,7 @@ function drawTokens(){
 const DIRS={red:[1,0],green:[0,1],yellow:[-1,0],blue:[0,-1]},ENTRY={red:[0,7],green:[7,0],yellow:[14,7],blue:[7,14]};
 function starPts(cx,cy,R,r){const a=[];for(let k=0;k<10;k++){const t=-Math.PI/2+k*Math.PI/5,q=k%2?r:R;a.push((cx+q*Math.cos(t)).toFixed(3)+','+(cy+q*Math.sin(t)).toFixed(3))}return a.join(' ')}
 function boardSVG(S){
-  let s='<svg viewBox="0 0 15 15" class="board" id="bd"><defs><linearGradient id="pinw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cdd0d8"/></linearGradient>'+
+  let s='<svg viewBox="0 0 15 15" class="board" id="bd" style="--tc:'+(HEX[S.turn]||'transparent')+'"><defs><linearGradient id="pinw" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cdd0d8"/></linearGradient>'+
    COLORS.map(c=>`<radialGradient id="g-${c}" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${LIGHT[c]}"/><stop offset="1" stop-color="${HEX[c]}"/></radialGradient>`).join('')+'</defs>';
   COLORS.forEach(c=>{const[ox,oy]=ORG[c],on=S.status==='playing'&&S.turn===c,p=S.players[c];
     s+=`<rect x="${ox}" y="${oy}" width="6" height="6" fill="${HEX[c]}"/>`;
@@ -338,7 +346,7 @@ function rulesPanel(S){
    `<label class="rr"><span>${l}</span><select data-k="${k}" ${S.isHost?'':'disabled'}>${o.map(([v,t])=>`<option value='${JSON.stringify(v)}' ${JSON.stringify(S.rules[k])===JSON.stringify(v)?'selected':''}>${t}</option>`).join('')}</select></label>`).join('')+'</div>';
 }
 function topbar(S){
-  return `<div class="bar"><div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div><div class="btns">
+  return `<div class="bar"><div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div>${S.status==='lobby'?'':`<div class="bm"><div class="bn">${BRAND}</div><div class="bb">by Rajat Walia</div></div>`}<div class="btns">
   <button id="cbtn" class="ib">💬<span class="bd" id="cb" ${unread?'':'hidden'}>${unread}</span></button><button id="iv" class="ib">📨</button><button id="mt" class="ib">${mute?'🔇':'🔊'}</button><button id="lv" class="ib">✕</button></div></div>`;
 }
 function playerCard(S,c){
@@ -346,7 +354,7 @@ function playerCard(S,c){
   const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!S.hold&&!animating(),held=on&&!!S.hold;
   const face=rl?1+Math.floor(Math.random()*6):hist[c];
   const sub=on?(held?'':(canRoll?'Your turn · ':'')+'<span id="tm"></span>'):(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
-  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]}"><div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
+  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38"><div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
   <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${held?'held':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
@@ -357,12 +365,12 @@ function render(){
     fx(true);
     h+=`<div class="lob">${hero(true)}<div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
     COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
-    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
+    `</div>${S.isHost?rulesPanel(S):''}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
   }else{
     fx(false);const mine=S.status==='playing'&&S.turn===S.me;
     const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:S.hold==='none'?`😕 ${esc(nm(S,S.turn))} rolled ${S.last?S.last.d:''}: no move possible`:S.hold==='sixes'?'🚫 Three 6s in a row: turn lost':mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
-    <div class="foot"><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
+    <div class="foot"><div class="status" style="--c:${HEX[S.status==='done'?S.winner:S.turn]};--ca:${HEX[S.status==='done'?S.winner:S.turn]}33">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
     if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
   }
   app.innerHTML=h;
