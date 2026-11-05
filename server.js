@@ -15,7 +15,7 @@ app.use((req, res, next) => {
 app.use(express.static(__dirname + '/public'));
 app.get('/healthz', (req, res) => res.send('ok'));
 const server = http.createServer(app);
-const io = new Server(server, { maxHttpBufferSize: 1e4, pingInterval: 10000, pingTimeout: 8000 });
+const io = new Server(server, { maxHttpBufferSize: 3e4, pingInterval: 10000, pingTimeout: 8000 });
 
 const rooms = new Map();
 const MAX_ROOMS = 300;
@@ -32,6 +32,10 @@ function seatByToken(R, token) {
 }
 const clean = s => String(typeof s === 'string' ? s : 'Player').replace(/[\u0000-\u001f<>]/g, '').trim().slice(0, 12) || 'Player';
 const isObj = o => !!o && typeof o === 'object' && !Array.isArray(o);
+/* profile photo: small JPEG data URL, validated strictly (it is shown to the other players) */
+const okAvatar = a => typeof a === 'string' && a.length <= 16000 && /^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a);
+const avatarMap = R => { const m = {}; COLORS.forEach(c => { const p = R.players[c]; if (p && p.av) m[c] = p.av; }); return m; };
+const pushAvatars = R => io.to(R.code).emit('avatars', avatarMap(R));
 const mkCode = () => Array.from({ length: 4 }, () => 'ABCDEFGHJKMNPQRSTUVWXYZ'[crypto.randomInt(0, 23)]).join('');
 
 function view(R, color) {
@@ -52,7 +56,7 @@ function broadcast(R) {
 function arm(R) {
   const p = R.players[R.turn]; let s;
   if (R.hold) s = HOLD_MS / 1000;
-  else if (!p || p.left || p.auto) s = 2;
+  else if (!p || p.left || p.auto) s = 1;
   else if (!p.on) s = Math.max(1, R.rules.offlineGraceSeconds);
   else s = R.dice != null ? R.rules.pickSeconds : R.rules.turnSeconds;
   R.turnMs = s * 1000; R.deadline = Date.now() + R.turnMs; R.seq = (R.seq || 0) + 1; R.touched = Date.now();
@@ -92,16 +96,16 @@ function attach(socket, R, color) {
   Object.assign(p, { on: true, sid: socket.id, left: false, auto: false, misses: 0 });
   socket.data = { code: R.code, color }; socket.join(R.code); R.touched = Date.now();
   socket.emit('chatlog', R.chat || []);
-  broadcast(R);
+  broadcast(R); pushAvatars(R);
 }
 function ctx(socket) {
   const d = socket.data || {}, R = rooms.get(d.code);
   const p = R && R.players[d.color];
   return p && p.sid === socket.id ? { R, c: d.color, p } : null;
 }
-function seat(R, name) {
+function seat(R, name, avatar) {
   const token = newToken(), color = COLORS.find(c => !R.players[c]);
-  R.players[color] = { name: clean(name), th: sha(token), on: false, sid: null, left: false, auto: false, misses: 0 };
+  R.players[color] = { name: clean(name), av: avatar, th: sha(token), on: false, sid: null, left: false, auto: false, misses: 0 };
   return { color, token };
 }
 
@@ -128,12 +132,13 @@ io.on('connection', socket => {
 
   socket.on('create', (msg, cb) => {
     cb = ack(cb); if (!isObj(msg)) return cb({ error: 'Bad request' });
+    if (!okAvatar(msg.avatar)) return cb({ error: 'Add your profile photo first' });
     if (rooms.size >= MAX_ROOMS) return cb({ error: 'Server is busy, try again later' });
     let code; do { code = mkCode(); } while (rooms.has(code));
     const R = { code, host: 'red', status: 'lobby', players: {}, order: [], turn: 'red', dice: null, movable: [], last: null,
       log: 'Room created', winner: null, tokens: E.fresh(), rules: { ...E.DEFAULT_RULES }, sixes: 0, miss: {}, rollSeq: 0, seq: 0, hold: null, pending: null, touched: Date.now(), chat: [] };
     rooms.set(code, R);
-    const { color, token } = seat(R, msg.name); attach(socket, R, color); cb({ code, token });
+    const { color, token } = seat(R, msg.name, msg.avatar); attach(socket, R, color); cb({ code, token });
   });
 
   socket.on('join', (msg, cb) => {
@@ -142,10 +147,11 @@ io.on('connection', socket => {
     const R = /^[A-Z]{4}$/.test(code) ? rooms.get(code) : null;
     if (!R) return cb({ error: 'No room with that code' });
     const mine = seatByToken(R, msg.token);
-    if (mine) { attach(socket, R, mine); return cb({ code }); }
+    if (mine) { if (okAvatar(msg.avatar)) R.players[mine].av = msg.avatar; attach(socket, R, mine); return cb({ code }); }
+    if (!okAvatar(msg.avatar)) return cb({ error: 'Add your profile photo first' });
     if (R.status !== 'lobby') return cb({ error: 'That game has already started' });
     if (!COLORS.some(c => !R.players[c])) return cb({ error: 'Room is full' });
-    const { color, token } = seat(R, msg.name); attach(socket, R, color); cb({ code, token });
+    const { color, token } = seat(R, msg.name, msg.avatar); attach(socket, R, color); cb({ code, token });
   });
 
   socket.on('rules', msg => {
@@ -196,7 +202,7 @@ io.on('connection', socket => {
     if (R.status === 'lobby') {
       detach(socket); delete R.players[c];
       const next = COLORS.find(k => R.players[k]);
-      if (!next) rooms.delete(R.code); else { if (c === R.host) R.host = next; broadcast(R); }
+      if (!next) rooms.delete(R.code); else { if (c === R.host) R.host = next; broadcast(R); pushAvatars(R); }
     } else {
       x.p.left = true; detach(socket);
       if (COLORS.every(k => !R.players[k] || R.players[k].left)) rooms.delete(R.code);
