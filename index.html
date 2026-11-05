@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Ludo Rooms</title>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3ec;--fg:#1d1d1f;--card:#fff;--line:#cfc9ba;--cell:#fff;--mut:#6b6b70}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}}
+:root[data-theme="dark"]{--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
+#app{max-width:480px;margin:0 auto;padding:14px}
+h1{margin:6px 0 2px;font-size:28px}.sub{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
+input{width:100%;box-sizing:border-box;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);margin:6px 0 10px}
+#cd{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-weight:700}
+button{font:inherit;font-weight:600;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);width:100%;cursor:pointer}
+button.pri{background:#2f7de1;border-color:#2f7de1;color:#fff}
+button:disabled{opacity:.45}
+.or{text-align:center;color:var(--mut);margin:12px 0 2px;font-size:14px}.msg{color:#e5483f;min-height:1.2em;margin:8px 0 0}
+.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+.code{font-weight:800;letter-spacing:.25em;font-size:20px}
+.top button{width:auto;padding:8px 12px;font-size:14px}
+.board{width:100%;height:auto;display:block;border-radius:12px;background:var(--card);touch-action:manipulation}
+.players{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.chip{flex:1 1 45%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--card);font-size:14px;min-width:0}
+.chip.on{border-color:var(--fg)}.chip i{width:14px;height:14px;border-radius:50%;flex:none}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.dice{display:flex;align-items:center;gap:12px;margin:8px 0}
+.face{width:64px;height:64px;border-radius:14px;border:3px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:34px;font-weight:800;flex:none}
+.status{font-weight:600}.log{color:var(--mut);font-size:14px}
+.mv{animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.25}}
+.tk{cursor:pointer}
+</style></head>
+<body><div id="app"></div>
+<script>
+const COLORS=['red','green','yellow','blue'];
+const HEX={red:'#e5483f',green:'#2fa84f',yellow:'#f2b705',blue:'#2f7de1'};
+const START={red:0,green:13,yellow:26,blue:39};
+const ORG={red:[0,0],green:[9,0],yellow:[9,9],blue:[0,9]};
+const HOME={red:k=>[1+k,7],green:k=>[7,1+k],yellow:k=>[13-k,7],blue:k=>[7,13-k]};
+const FIN={red:[-.75,0],green:[0,-.75],yellow:[.75,0],blue:[0,.75]};
+const SAFE=new Set([0,8,13,21,26,34,39,47]);
+const PATH=[];
+(function(){const a=(c,r)=>PATH.push([c,r]);
+for(let c=1;c<=5;c++)a(c,6);for(let r=5;r>=0;r--)a(6,r);a(7,0);a(8,0);
+for(let r=1;r<=5;r++)a(8,r);for(let c=9;c<=14;c++)a(c,6);a(14,7);a(14,8);
+for(let c=13;c>=9;c--)a(c,8);for(let r=9;r<=14;r++)a(8,r);a(7,14);a(6,14);
+for(let r=13;r>=9;r--)a(6,r);for(let c=5;c>=0;c--)a(c,8);a(0,7);a(0,6);})();
+
+const app=document.getElementById('app');
+const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const nm=(S,c)=>(S.players[c]&&S.players[c].name)||c;
+const abs=(c,p)=>(START[c]+p)%52;
+let state=null,online=false;
+let pid=ls.get('ludo.pid');if(!pid){pid=Math.random().toString(36).slice(2)+Date.now().toString(36);ls.set('ludo.pid',pid)}
+const socket=io();
+const toast=t=>{const m=document.getElementById('tmsg');if(m)m.textContent=t};
+const err=m=>{const e=document.getElementById('msg');if(e)e.textContent=m};
+
+socket.on('connect',()=>{online=true;const r=ls.get('ludo.room');if(r)join(r,ls.get('ludo.name')||'Player',true);else if(!state)home()});
+socket.on('disconnect',()=>{online=false;toast('Connection lost, reconnecting…')});
+socket.on('state',S=>{state=S;render()});
+
+function home(msg){
+  state=null;
+  app.innerHTML=`<h1>🎲 Ludo Rooms</h1><p class="sub">2 to 4 friends, each on their own phone.</p>
+  <div class="card"><label>Your name</label>
+  <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
+  <button id="mk" class="pri">Create room</button>
+  <div class="or">or join a friend’s room</div>
+  <input id="cd" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
+  <button id="jn">Join room</button>
+  <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div>`;
+  const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
+  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name(),pid},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code)});
+  document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
+}
+function join(code,name,silent){
+  socket.emit('join',{code,name,pid},r=>{
+    if(r.error){if(silent){ls.del('ludo.room');home()}else err(r.error);return}
+    ls.set('ludo.room',r.code);
+  });
+}
+function roll(){socket.emit('roll')}
+function tap(c,i){if(state&&c===state.me&&state.movable.includes(i))socket.emit('move',i)}
+function start(){socket.emit('start')}
+function leave(){socket.emit('leave');ls.del('ludo.room');home()}
+
+/* ---------- drawing ---------- */
+function pos(c,p,i){
+  if(p<0){const[ox,oy]=ORG[c];return[ox+(i%2?4:2),oy+(i<2?2:4)]}
+  if(p<=50){const[x,y]=PATH[abs(c,p)];return[x+.5,y+.5]}
+  if(p<56){const[x,y]=HOME[c](p-51);return[x+.5,y+.5]}
+  const o=FIN[c],j=(i-1.5)*.12;return[7.5+o[0]+j,7.5+o[1]+j];
+}
+function board(S){
+  const me=S.me;let s='<svg viewBox="0 0 15 15" class="board">';
+  COLORS.forEach(c=>{const[ox,oy]=ORG[c],on=S.status==='playing'&&S.turn===c;
+    s+=`<rect x="${ox}" y="${oy}" width="6" height="6" fill="${HEX[c]}" ${on?'stroke="var(--fg)" stroke-width=".18"':''}/><rect x="${ox+1}" y="${oy+1}" width="4" height="4" rx=".5" fill="var(--cell)"/>`;
+    [[2,2],[4,2],[2,4],[4,4]].forEach(q=>s+=`<circle cx="${ox+q[0]}" cy="${oy+q[1]}" r=".5" fill="${HEX[c]}" opacity=".25"/>`)});
+  PATH.forEach(([x,y],i)=>{const st=COLORS.find(c=>START[c]===i);
+    s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${st?HEX[st]:'var(--cell)'}" stroke="var(--line)" stroke-width=".05"/>`;
+    if(!st&&SAFE.has(i))s+=`<text x="${x+.5}" y="${y+.74}" font-size=".6" text-anchor="middle" fill="var(--line)">★</text>`});
+  COLORS.forEach(c=>{for(let k=0;k<5;k++){const[x,y]=HOME[c](k);s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${HEX[c]}" opacity=".6" stroke="var(--line)" stroke-width=".05"/>`}});
+  s+=`<polygon points="6,6 6,9 7.5,7.5" fill="${HEX.red}"/><polygon points="6,6 9,6 7.5,7.5" fill="${HEX.green}"/><polygon points="9,6 9,9 7.5,7.5" fill="${HEX.yellow}"/><polygon points="6,9 9,9 7.5,7.5" fill="${HEX.blue}"/>`;
+  const mv=(S.status==='playing'&&S.turn===me&&S.dice!=null)?S.movable:[],seen={};
+  S.order.forEach(c=>S.tokens[c].forEach((p,i)=>{
+    const[x,y]=pos(c,p,i),k=p<0?c+i:x+','+y;seen[k]=(seen[k]||0)+1;const n=seen[k]-1,
+    cx=x+(p>=0?n*.2:0),cy=y-(p>=0?n*.2:0),can=c===me&&mv.includes(i),r=p===56?.26:.36;
+    s+=`<g class="tk" data-c="${c}" data-i="${i}">${can?`<circle class="mv" cx="${cx}" cy="${cy}" r=".52" fill="none" stroke="var(--fg)" stroke-width=".12"/>`:''}<circle cx="${cx}" cy="${cy}" r="${r}" fill="${HEX[c]}" stroke="#fff" stroke-width=".08"/><circle cx="${cx}" cy="${cy}" r=".55" fill="transparent"/></g>`}));
+  return s+'</svg>';
+}
+function render(){
+  const S=state,me=S.me,mine=S.turn===me&&S.status==='playing',isHost=S.isHost;
+  let h=`<div class="top"><div><div class="sub" style="margin:0">Room code</div><div class="code">${esc(S.code)}</div></div>
+  <div style="display:flex;gap:6px"><button id="cp">Copy code</button><button id="lv">Leave</button></div></div>${board(S)}<div class="players">`;
+  COLORS.forEach(c=>{const p=S.players[c];if(!p&&S.status!=='lobby')return;
+    h+=`<div class="chip ${S.status==='playing'&&S.turn===c?'on':''}"><i style="background:${HEX[c]}"></i><span>${p?esc(p.name)+(c===me?' (you)':'')+(p.on?'':' (offline)'):'Empty seat'}</span></div>`});
+  h+='</div>';
+  let line='',btn='';
+  if(S.status==='lobby'){
+    const n=COLORS.filter(c=>S.players[c]).length;
+    line=`Waiting for friends (${n}/4). Share the code above.`;
+    btn=isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>Start game</button>`:'';
+  }else if(S.status==='done'){
+    line=`🎉 ${esc(nm(S,S.winner))} wins!`;btn=isHost?'<button id="st" class="pri">Play again</button>':'';
+  }else{
+    line=mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token to move'):`Waiting for ${esc(nm(S,S.turn))}…`;
+    btn=`<button id="rl" class="pri" ${mine&&S.dice==null?'':'disabled'}>🎲 Roll</button>`;
+  }
+  const face=S.last?`<div class="face" style="border-color:${HEX[S.last.c]}">${S.last.d}</div>`:'<div class="face">🎲</div>';
+  h+=`<div class="dice">${face}<div><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div></div>${btn}<p class="msg" id="tmsg"></p>`;
+  app.innerHTML=h;
+  document.getElementById('cp').onclick=()=>{try{navigator.clipboard.writeText(S.code);toast('Code copied')}catch(e){toast('Code: '+S.code)}};
+  document.getElementById('lv').onclick=leave;
+  const st=document.getElementById('st');if(st)st.onclick=start;
+  const rl=document.getElementById('rl');if(rl)rl.onclick=roll;
+  app.querySelectorAll('.tk').forEach(g=>g.onclick=()=>tap(g.dataset.c,+g.dataset.i));
+}
+
+/* ---------- init ---------- */
+home();
+</script></body></html>
