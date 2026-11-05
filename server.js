@@ -44,6 +44,22 @@ function applyMove(R, c, i, d) {
   R.log = msg;
 }
 
+const TURN_MS = +process.env.TURN_MS || 25000;
+function arm(R) {
+  const p = R.players[R.turn];
+  R.deadline = Date.now() + (p && p.on ? (R.dice != null ? 12000 : TURN_MS) : 2500);
+  R.seq = (R.seq || 0) + 1; R.touched = Date.now();
+}
+function doRoll(R, c) {
+  const d = 1 + Math.floor(Math.random() * 6), mv = movable(R, c, d);
+  R.last = { c, d }; R.rollSeq = (R.rollSeq || 0) + 1;
+  if (mv.length === 1) applyMove(R, c, mv[0], d);
+  else if (mv.length === 0) { R.log = `${nm(R, c)} rolled ${d}, no move`; R.turn = nextTurn(R, c); }
+  else { R.dice = d; R.movable = mv; R.log = `${nm(R, c)} rolled ${d}`; }
+  arm(R); broadcast(R);
+}
+function doPick(R, c, i) { applyMove(R, c, i, R.dice); arm(R); broadcast(R); }
+
 /* ---------- rooms ---------- */
 function view(R, color) {
   const players = {};
@@ -51,6 +67,8 @@ function view(R, color) {
   return {
     code: R.code, status: R.status, players, order: R.order, turn: R.turn, dice: R.dice,
     movable: R.movable, last: R.last, log: R.log, winner: R.winner, tokens: R.tokens,
+    seq: R.seq || 0, rollSeq: R.rollSeq || 0,
+    left: R.status === 'playing' ? Math.max(0, Math.ceil((R.deadline - Date.now()) / 1000)) : 0,
     me: color, isHost: R.players[color] && R.players[color].pid === R.host
   };
 }
@@ -94,24 +112,19 @@ io.on('connection', socket => {
     const R = x.R; if (R.status === 'playing') return;
     R.order = COLORS.filter(c => R.players[c]); if (R.order.length < 2) return;
     Object.assign(R, { status: 'playing', turn: R.order[0], tokens: fresh(), dice: null, movable: [], last: null, winner: null, log: 'Game started' });
-    broadcast(R);
+    arm(R); broadcast(R);
   });
 
   socket.on('roll', () => {
     const x = ctx(); if (!x) return; const { R, c } = x;
     if (R.status !== 'playing' || R.turn !== c || R.dice != null) return;
-    const d = 1 + Math.floor(Math.random() * 6), mv = movable(R, c, d);
-    R.last = { c, d }; R.touched = Date.now();
-    if (mv.length === 1) applyMove(R, c, mv[0], d);
-    else if (mv.length === 0) { R.log = `${nm(R, c)} rolled ${d}, no move`; R.turn = nextTurn(R, c); }
-    else { R.dice = d; R.movable = mv; R.log = `${nm(R, c)} rolled ${d}`; }
-    broadcast(R);
+    doRoll(R, c);
   });
 
   socket.on('move', i => {
     const x = ctx(); if (!x) return; const { R, c } = x;
     if (R.status !== 'playing' || R.turn !== c || R.dice == null || !R.movable.includes(i)) return;
-    applyMove(R, c, i, R.dice); R.touched = Date.now(); broadcast(R);
+    doPick(R, c, i);
   });
 
   socket.on('leave', () => {
@@ -129,6 +142,15 @@ io.on('connection', socket => {
     if (p && p.sid === socket.id) { p.on = false; p.sid = null; broadcast(x.R); }
   });
 });
+
+// turn timer: idle or offline players are played automatically
+setInterval(() => {
+  const now = Date.now();
+  for (const R of rooms.values()) {
+    if (R.status !== 'playing' || now < R.deadline) continue;
+    if (R.dice == null) doRoll(R, R.turn); else doPick(R, R.turn, R.movable[Math.floor(Math.random() * R.movable.length)]);
+  }
+}, 500);
 
 // forget rooms nobody has touched for 6 hours
 setInterval(() => { for (const [k, R] of rooms) if (Date.now() - R.touched > 6 * 3600e3) rooms.delete(k); }, 600e3);
