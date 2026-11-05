@@ -1,41 +1,52 @@
 <!DOCTYPE html>
 <html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#17171a">
 <title>Ludo Rooms</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3ec;--fg:#1d1d1f;--card:#fff;--line:#cfc9ba;--cell:#fff;--mut:#6b6b70}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}}
 :root[data-theme="dark"]{--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}
+*{-webkit-tap-highlight-color:transparent}
 html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif}
-#app{max-width:480px;margin:0 auto;padding:14px}
+body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
+#app{max-width:480px;margin:0 auto;padding:12px}
 h1{margin:6px 0 2px;font-size:28px}.sub{color:var(--mut);margin:0 0 14px}
 .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
-input{width:100%;box-sizing:border-box;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);margin:6px 0 10px}
+input{width:100%;box-sizing:border-box;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);margin:6px 0 10px;-webkit-user-select:text;user-select:text}
 #cd{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-weight:700}
 button{font:inherit;font-weight:600;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);width:100%;cursor:pointer}
-button.pri{background:#2f7de1;border-color:#2f7de1;color:#fff}
-button:disabled{opacity:.45}
-.or{text-align:center;color:var(--mut);margin:12px 0 2px;font-size:14px}.msg{color:#e5483f;min-height:1.2em;margin:8px 0 0}
+button.pri{background:#2f7de1;border-color:#2f7de1;color:#fff}button:disabled{opacity:.45}
+.or{text-align:center;color:var(--mut);margin:12px 0 2px;font-size:14px}.msg{color:#e5483f;min-height:1.2em;margin:8px 0 0;font-size:14px}
 .top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
 .code{font-weight:800;letter-spacing:.25em;font-size:20px}
-.top button{width:auto;padding:8px 12px;font-size:14px}
-.board{width:100%;height:auto;display:block;border-radius:12px;background:var(--card);touch-action:manipulation}
+.btns{display:flex;gap:6px}.btns button{width:auto;padding:8px 11px;font-size:14px}
+.board{width:100%;height:auto;display:block;border-radius:14px;background:var(--card);box-shadow:0 6px 24px rgba(0,0,0,.25);touch-action:manipulation}
 .players{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.chip{flex:1 1 45%;display:flex;align-items:center;gap:8px;padding:8px 10px;border-radius:10px;border:2px solid var(--line);background:var(--card);font-size:14px;min-width:0}
+.chip{flex:1 1 45%;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:var(--card);font-size:14px;min-width:0}
 .chip.on{border-color:var(--fg)}.chip i{width:14px;height:14px;border-radius:50%;flex:none}
-.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.dice{display:flex;align-items:center;gap:12px;margin:8px 0}
-.face{width:64px;height:64px;border-radius:14px;border:3px solid var(--line);background:var(--card);display:grid;place-items:center;font-size:34px;font-weight:800;flex:none}
-.status{font-weight:600}.log{color:var(--mut);font-size:14px}
-.mv{animation:pulse 1s infinite}@keyframes pulse{50%{opacity:.25}}
-.tk{cursor:pointer}
+.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.tm{font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px}
+.dicewrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:12px 0 6px;text-align:center}
+.dice{width:84px;height:84px;box-sizing:border-box;border-radius:20px;background:linear-gradient(145deg,#fff,#d9d5ca);border:4px solid var(--line);box-shadow:0 6px 0 rgba(0,0,0,.22),0 12px 22px rgba(0,0,0,.3);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:11px;gap:3px}
+.dice i{border-radius:50%}.dice i.p{background:radial-gradient(circle at 35% 30%,#555,#111)}
+.dice.my{cursor:pointer;animation:bob 1s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-6px) scale(1.07)}}
+.dice.roll{animation:shake .14s linear infinite}
+@keyframes shake{0%{transform:rotate(-14deg) translateY(-8px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-8px)}}
+.status{font-weight:700}.log{color:var(--mut);font-size:14px}
+.mv{animation:pulse .9s infinite}@keyframes pulse{50%{opacity:.25}}.tk{cursor:pointer}
+.conf{position:fixed;inset:0;pointer-events:none;overflow:hidden}
+.conf i{position:absolute;top:-16px;width:9px;height:14px;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 </style></head>
 <body><div id="app"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const COLORS=['red','green','yellow','blue'];
 const HEX={red:'#e5483f',green:'#2fa84f',yellow:'#f2b705',blue:'#2f7de1'};
+const LIGHT={red:'#ff9a90',green:'#8be8a2',yellow:'#ffe58a',blue:'#9ccbff'};
 const START={red:0,green:13,yellow:26,blue:39};
 const ORG={red:[0,0],green:[9,0],yellow:[9,9],blue:[0,9]};
 const HOME={red:k=>[1+k,7],green:k=>[7,1+k],yellow:k=>[13-k,7],blue:k=>[7,13-k]};
@@ -51,20 +62,49 @@ for(let r=13;r>=9;r--)a(6,r);for(let c=5;c>=0;c--)a(c,8);a(0,7);a(0,6);})();
 const app=document.getElementById('app');
 const ls={get(k){try{return localStorage.getItem(k)}catch(e){return null}},set(k,v){try{localStorage.setItem(k,v)}catch(e){}},del(k){try{localStorage.removeItem(k)}catch(e){}}};
 const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const clone=o=>JSON.parse(JSON.stringify(o));
 const nm=(S,c)=>(S.players[c]&&S.players[c].name)||c;
 const abs=(c,p)=>(START[c]+p)%52;
-let state=null,online=false;
-let pid=ls.get('ludo.pid');if(!pid){pid=Math.random().toString(36).slice(2)+Date.now().toString(36);ls.set('ludo.pid',pid)}
-const socket=io();
 const toast=t=>{const m=document.getElementById('tmsg');if(m)m.textContent=t};
 const err=m=>{const e=document.getElementById('msg');if(e)e.textContent=m};
 
+/* ---------- sound ---------- */
+let AC=null,mute=ls.get('ludo.mute')==='1';
+function unlock(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}catch(e){}}
+function tone(f,d,type,v,w){if(mute||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(w||0);o.type=type||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
+const sfx={roll(){for(let k=0;k<6;k++)tone(200+Math.random()*300,.05,'square',.05,k*.11)},hop(){tone(540,.07,'triangle',.14)},
+cap(){tone(330,.12,'sawtooth',.09);tone(160,.25,'sawtooth',.09,.1)},home(){tone(660,.1,'sine',.15);tone(880,.2,'sine',.15,.1)},
+turn(){tone(780,.08,'sine',.1);tone(1040,.1,'sine',.1,.09)},win(){[523,659,784,1047].forEach((f,k)=>tone(f,.28,'triangle',.15,k*.14))}};
+document.addEventListener('pointerdown',unlock);
+
+/* ---------- connection ---------- */
+let pid=ls.get('ludo.pid');if(!pid){pid=Math.random().toString(36).slice(2)+Date.now().toString(36);ls.set('ludo.pid',pid)}
+const socket=io();
+let state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
+let shown=null,tgt=null,jobs=[],cur=null,diceUntil=0,rollStart=0,raf=0,shuf=0;
+const rolling=()=>performance.now()<diceUntil;
+const animating=()=>rolling()||!!cur||jobs.length>0;
+
 socket.on('connect',()=>{online=true;const r=ls.get('ludo.room');if(r)join(r,ls.get('ludo.name')||'Player',true);else if(!state)home()});
 socket.on('disconnect',()=>{online=false;toast('Connection lost, reconnecting…')});
-socket.on('state',S=>{state=S;render()});
+socket.on('state',S=>{
+  const first=!state||S.code!==lastCode;
+  state=S;recv=Date.now();
+  const snap=first||(S.status==='playing'&&lastStatus!=='playing')||S.status==='lobby';
+  if(snap){shown=clone(S.tokens);tgt=clone(S.tokens);jobs=[];cur=null;lastRoll=S.rollSeq;celebrated=false}
+  else{
+    if(S.rollSeq>lastRoll){lastRoll=S.rollSeq;const n=performance.now();if(n-rollStart>1500){rollStart=n;sfx.roll()}diceUntil=rollStart+750;startShuffle()}
+    S.order.forEach(c=>S.tokens[c].forEach((p,i)=>{if(tgt[c][i]!==p){jobs.push({c,i,from:tgt[c][i],to:p});tgt[c][i]=p}}));
+    jobs.sort((a,b)=>(b.to>=0)-(a.to>=0));
+  }
+  if(S.status==='playing'&&S.turn===S.me&&lastTurn!==S.turn&&!snap)setTimeout(sfx.turn,700);
+  lastTurn=S.turn;lastStatus=S.status;lastCode=S.code;
+  render();kick();maybeCelebrate();
+});
 
+/* ---------- home / join ---------- */
 function home(msg){
-  state=null;
+  state=null;lastCode='';
   app.innerHTML=`<h1>🎲 Ludo Rooms</h1><p class="sub">2 to 4 friends, each on their own phone.</p>
   <div class="card"><label>Your name</label>
   <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
@@ -74,29 +114,90 @@ function home(msg){
   <button id="jn">Join room</button>
   <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div>`;
   const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
-  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name(),pid},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code)});
+  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name(),pid},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);wake()});
   document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
 }
 function join(code,name,silent){
   socket.emit('join',{code,name,pid},r=>{
     if(r.error){if(silent){ls.del('ludo.room');home()}else err(r.error);return}
-    ls.set('ludo.room',r.code);
+    ls.set('ludo.room',r.code);wake();
   });
 }
-function roll(){socket.emit('roll')}
-function tap(c,i){if(state&&c===state.me&&state.movable.includes(i))socket.emit('move',i)}
+function wake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
+document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state)wake()});
+
+/* ---------- actions ---------- */
+function canRollNow(){const S=state;return !!S&&S.status==='playing'&&S.turn===S.me&&S.dice==null&&!animating()}
+function rollTap(){
+  if(!canRollNow())return;
+  rollStart=performance.now();diceUntil=rollStart+750;sfx.roll();startShuffle();kick();socket.emit('roll');
+}
+function tap(c,i){if(state&&c===state.me&&!animating()&&state.dice!=null&&state.movable.includes(i))socket.emit('move',i)}
 function start(){socket.emit('start')}
 function leave(){socket.emit('leave');ls.del('ludo.room');home()}
+function invite(){
+  const t=`Join my Ludo game! Room code: ${state.code}`,u=location.origin;
+  if(navigator.share){navigator.share({title:'Ludo Rooms',text:t,url:u}).catch(()=>{})}
+  else{try{navigator.clipboard.writeText(t+' '+u);toast('Invite copied')}catch(e){toast(t)}}
+}
 
-/* ---------- drawing ---------- */
+/* ---------- dice ---------- */
+const PIPS={1:[4],2:[0,8],3:[0,4,8],4:[0,2,6,8],5:[0,2,4,6,8],6:[0,2,3,5,6,8]};
+const pips=v=>Array.from({length:9},(_,k)=>`<i class="${v&&PIPS[v].includes(k)?'p':''}"></i>`).join('');
+function setFace(v){const d=document.getElementById('dice');if(d)d.innerHTML=pips(v)}
+function startShuffle(){
+  clearInterval(shuf);const d=document.getElementById('dice');if(d){d.classList.add('roll');d.classList.remove('my')}
+  shuf=setInterval(()=>{if(performance.now()>=diceUntil){clearInterval(shuf);shuf=0;render();maybeCelebrate();return}setFace(1+Math.floor(Math.random()*6))},75);
+}
+
+/* ---------- token animation ---------- */
+function kick(){if(!raf)raf=requestAnimationFrame(frame)}
+function buildSteps(j,c,i){
+  if(j.to<0)return[{p:-1,dur:450,sfx:sfx.cap,kind:'back'}];
+  if(j.from<0)return[{p:0,dur:280,sfx:sfx.hop,kind:'out'}];
+  const s=[];for(let p=j.from+1;p<=j.to;p++)s.push({p,dur:180,sfx:p===56?sfx.home:sfx.hop,kind:'hop'});return s;
+}
+function frame(){
+  raf=0;const now=performance.now();
+  if(!cur&&jobs.length&&now>=diceUntil){cur=jobs.shift();cur.steps=buildSteps(cur);cur.k=0;cur.t0=now;cur.u=0}
+  if(cur){
+    const st=cur.steps[cur.k];cur.u=Math.min(1,(now-cur.t0)/st.dur);
+    if(cur.u>=1){shown[cur.c][cur.i]=st.p;st.sfx();cur.k++;cur.t0=now;cur.u=0;
+      if(cur.k>=cur.steps.length){cur=null;if(!jobs.length){render();maybeCelebrate()}}}
+  }
+  drawTokens();
+  if(cur||jobs.length||rolling())raf=requestAnimationFrame(frame);
+}
 function pos(c,p,i){
   if(p<0){const[ox,oy]=ORG[c];return[ox+(i%2?4:2),oy+(i<2?2:4)]}
   if(p<=50){const[x,y]=PATH[abs(c,p)];return[x+.5,y+.5]}
   if(p<56){const[x,y]=HOME[c](p-51);return[x+.5,y+.5]}
   const o=FIN[c],j=(i-1.5)*.12;return[7.5+o[0]+j,7.5+o[1]+j];
 }
-function board(S){
-  const me=S.me;let s='<svg viewBox="0 0 15 15" class="board">';
+function drawTokens(){
+  const g=document.getElementById('tl');if(!g||!state||!shown)return;
+  const S=state,me=S.me,mv=(!animating()&&S.status==='playing'&&S.turn===me&&S.dice!=null)?S.movable:[];
+  let ghost='',body='',top='';const seen={};
+  mv.forEach(i=>{const p=shown[me][i],d=p<0?0:p+S.dice,[x,y]=pos(me,d,i);
+    ghost+=`<circle class="mv" cx="${x}" cy="${y}" r=".4" fill="${HEX[me]}" fill-opacity=".35" stroke="#fff" stroke-width=".07" stroke-dasharray=".14 .1"/>`});
+  S.order.forEach(c=>shown[c].forEach((p,i)=>{
+    let[x,y]=pos(c,p,i),lift=0,r=p===56?.27:.36;
+    const anim=cur&&cur.c===c&&cur.i===i;
+    if(anim){const st=cur.steps[cur.k],b=pos(c,st.p,i),u=cur.u,e=u*u*(3-2*u);x+=(b[0]-x)*e;y+=(b[1]-y)*e;lift=st.kind==='back'?0:Math.sin(u*Math.PI)*.45}
+    else if(p>=0){const k=x+','+y;seen[k]=(seen[k]||0)+1;const n=seen[k]-1;x+=n*.2;y-=n*.2}
+    const can=!anim&&c===me&&mv.includes(i),sc=1+lift*.6;
+    const t=`<g class="tk" data-c="${c}" data-i="${i}">${can?`<circle class="mv" cx="${x}" cy="${y}" r=".53" fill="none" stroke="var(--fg)" stroke-width=".12"/>`:''}
+    <ellipse cx="${x}" cy="${y+.16}" rx="${r*.9/sc}" ry="${r*.35/sc}" fill="#000" opacity=".28"/>
+    <circle cx="${x}" cy="${y-lift}" r="${r*sc}" fill="url(#g-${c})" stroke="#fff" stroke-width=".08"/>
+    <circle cx="${x-r*.3}" cy="${y-lift-r*.35}" r="${r*.22}" fill="#fff" opacity=".6"/><circle cx="${x}" cy="${y-lift}" r=".55" fill="transparent"/></g>`;
+    if(anim)top+=t;else body+=t;
+  }));
+  g.innerHTML=ghost+body+top;
+}
+
+/* ---------- board + screen ---------- */
+function boardSVG(S){
+  let s='<svg viewBox="0 0 15 15" class="board" id="bd"><defs>'+COLORS.map(c=>`<radialGradient id="g-${c}" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${LIGHT[c]}"/><stop offset="1" stop-color="${HEX[c]}"/></radialGradient>`).join('')+'</defs>';
   COLORS.forEach(c=>{const[ox,oy]=ORG[c],on=S.status==='playing'&&S.turn===c;
     s+=`<rect x="${ox}" y="${oy}" width="6" height="6" fill="${HEX[c]}" ${on?'stroke="var(--fg)" stroke-width=".18"':''}/><rect x="${ox+1}" y="${oy+1}" width="4" height="4" rx=".5" fill="var(--cell)"/>`;
     [[2,2],[4,2],[2,4],[4,4]].forEach(q=>s+=`<circle cx="${ox+q[0]}" cy="${oy+q[1]}" r=".5" fill="${HEX[c]}" opacity=".25"/>`)});
@@ -104,42 +205,46 @@ function board(S){
     s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${st?HEX[st]:'var(--cell)'}" stroke="var(--line)" stroke-width=".05"/>`;
     if(!st&&SAFE.has(i))s+=`<text x="${x+.5}" y="${y+.74}" font-size=".6" text-anchor="middle" fill="var(--line)">★</text>`});
   COLORS.forEach(c=>{for(let k=0;k<5;k++){const[x,y]=HOME[c](k);s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${HEX[c]}" opacity=".6" stroke="var(--line)" stroke-width=".05"/>`}});
-  s+=`<polygon points="6,6 6,9 7.5,7.5" fill="${HEX.red}"/><polygon points="6,6 9,6 7.5,7.5" fill="${HEX.green}"/><polygon points="9,6 9,9 7.5,7.5" fill="${HEX.yellow}"/><polygon points="6,9 9,9 7.5,7.5" fill="${HEX.blue}"/>`;
-  const mv=(S.status==='playing'&&S.turn===me&&S.dice!=null)?S.movable:[],seen={};
-  S.order.forEach(c=>S.tokens[c].forEach((p,i)=>{
-    const[x,y]=pos(c,p,i),k=p<0?c+i:x+','+y;seen[k]=(seen[k]||0)+1;const n=seen[k]-1,
-    cx=x+(p>=0?n*.2:0),cy=y-(p>=0?n*.2:0),can=c===me&&mv.includes(i),r=p===56?.26:.36;
-    s+=`<g class="tk" data-c="${c}" data-i="${i}">${can?`<circle class="mv" cx="${cx}" cy="${cy}" r=".52" fill="none" stroke="var(--fg)" stroke-width=".12"/>`:''}<circle cx="${cx}" cy="${cy}" r="${r}" fill="${HEX[c]}" stroke="#fff" stroke-width=".08"/><circle cx="${cx}" cy="${cy}" r=".55" fill="transparent"/></g>`}));
-  return s+'</svg>';
+  s+=`<polygon points="6,6 6,9 7.5,7.5" fill="${HEX.red}"/><polygon points="6,6 9,6 7.5,7.5" fill="${HEX.green}"/><polygon points="9,6 9,9 7.5,7.5" fill="${HEX.yellow}"/><polygon points="6,9 9,9 7.5,7.5" fill="${HEX.blue}"/><g id="tl"></g></svg>`;
+  return s;
 }
 function render(){
-  const S=state,me=S.me,mine=S.turn===me&&S.status==='playing',isHost=S.isHost;
+  const S=state;if(!S)return;
+  const me=S.me,mine=S.status==='playing'&&S.turn===me,rl=rolling(),canRoll=mine&&S.dice==null&&!animating();
   let h=`<div class="top"><div><div class="sub" style="margin:0">Room code</div><div class="code">${esc(S.code)}</div></div>
-  <div style="display:flex;gap:6px"><button id="cp">Copy code</button><button id="lv">Leave</button></div></div>${board(S)}<div class="players">`;
-  COLORS.forEach(c=>{const p=S.players[c];if(!p&&S.status!=='lobby')return;
-    h+=`<div class="chip ${S.status==='playing'&&S.turn===c?'on':''}"><i style="background:${HEX[c]}"></i><span>${p?esc(p.name)+(c===me?' (you)':'')+(p.on?'':' (offline)'):'Empty seat'}</span></div>`});
+  <div class="btns"><button id="iv">Invite</button><button id="mt">${mute?'🔇':'🔊'}</button><button id="lv">Leave</button></div></div>${boardSVG(S)}<div class="players">`;
+  COLORS.forEach(c=>{const p=S.players[c];if(!p&&S.status!=='lobby')return;const on=S.status==='playing'&&S.turn===c;
+    h+=`<div class="chip ${on?'on':''}"><i style="background:${HEX[c]}"></i><span>${p?esc(p.name)+(c===me?' (you)':'')+(p.on?'':' (offline)'):'Empty seat'}</span>${on?'<b class="tm" id="tm"></b>':''}</div>`});
   h+='</div>';
-  let line='',btn='';
   if(S.status==='lobby'){
     const n=COLORS.filter(c=>S.players[c]).length;
-    line=`Waiting for friends (${n}/4). Share the code above.`;
-    btn=isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>Start game</button>`:'';
-  }else if(S.status==='done'){
-    line=`🎉 ${esc(nm(S,S.winner))} wins!`;btn=isHost?'<button id="st" class="pri">Play again</button>':'';
+    h+=`<div class="dicewrap"><div class="status">Waiting for friends (${n}/4)</div><div class="log">Tap Invite to send the code</div></div>`;
+    if(S.isHost)h+=`<button id="st" class="pri" ${n<2?'disabled':''}>Start game</button>`;
   }else{
-    line=mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token to move'):`Waiting for ${esc(nm(S,S.turn))}…`;
-    btn=`<button id="rl" class="pri" ${mine&&S.dice==null?'':'disabled'}>🎲 Roll</button>`;
+    const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:mine?(S.dice==null?'Your turn: tap the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
+    const face=rl?1+Math.floor(Math.random()*6):(S.last?S.last.d:0),bc=canRoll?HEX[me]:(S.last?HEX[S.last.c]:'var(--line)');
+    h+=`<div class="dicewrap"><div id="dice" class="dice ${rl?'roll':''} ${canRoll?'my':''}" style="border-color:${bc}">${pips(face)}</div><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
+    if(S.status==='done'&&S.isHost)h+='<button id="st" class="pri">Play again</button>';
   }
-  const face=S.last?`<div class="face" style="border-color:${HEX[S.last.c]}">${S.last.d}</div>`:'<div class="face">🎲</div>';
-  h+=`<div class="dice">${face}<div><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div></div>${btn}<p class="msg" id="tmsg"></p>`;
+  h+='<p class="msg" id="tmsg"></p>';
   app.innerHTML=h;
-  document.getElementById('cp').onclick=()=>{try{navigator.clipboard.writeText(S.code);toast('Code copied')}catch(e){toast('Code: '+S.code)}};
-  document.getElementById('lv').onclick=leave;
-  const st=document.getElementById('st');if(st)st.onclick=start;
-  const rl=document.getElementById('rl');if(rl)rl.onclick=roll;
-  app.querySelectorAll('.tk').forEach(g=>g.onclick=()=>tap(g.dataset.c,+g.dataset.i));
+  const $=id=>document.getElementById(id);
+  $('iv').onclick=invite;$('lv').onclick=leave;
+  $('mt').onclick=()=>{mute=!mute;ls.set('ludo.mute',mute?'1':'0');unlock();$('mt').textContent=mute?'🔇':'🔊'};
+  if($('st'))$('st').onclick=start;
+  if($('dice'))$('dice').onclick=rollTap;
+  $('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
+  drawTokens();updateTimer();
 }
+function updateTimer(){const e=document.getElementById('tm');if(e&&state&&state.status==='playing')e.textContent=Math.max(0,state.left-Math.floor((Date.now()-recv)/1000))+'s'}
+setInterval(updateTimer,500);
 
-/* ---------- init ---------- */
+/* ---------- win ---------- */
+function maybeCelebrate(){
+  if(!state||state.status!=='done'||celebrated||animating())return;celebrated=true;sfx.win();
+  const w=document.createElement('div');w.className='conf';
+  for(let k=0;k<70;k++){const e=document.createElement('i');e.style.cssText=`left:${Math.random()*100}%;background:${HEX[COLORS[k%4]]};animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*2}s`;w.appendChild(e)}
+  document.body.appendChild(w);setTimeout(()=>w.remove(),5500);
+}
 home();
 </script></body></html>
