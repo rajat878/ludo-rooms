@@ -1,11 +1,12 @@
 'use strict';
 /* Ludo rules engine: pure functions over a room object R.
-   R needs: rules, order, players{color:{name}}, tokens, turn, dice, movable, last, sixes, miss, status, winner, log */
+   R needs: rules, order, players{color:{name}}, tokens, turn, dice, movable, last, sixes, miss, status, winner, finished, log */
 const crypto = require('crypto');
 
 const COLORS = ['red', 'green', 'yellow', 'blue'];
 const START = { red: 0, green: 13, yellow: 26, blue: 39 };
 const SAFE = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
+const ORD = ['1st', '2nd', '3rd', '4th'];
 
 const DEFAULT_RULES = {
   exitOn: 'six',
@@ -47,13 +48,18 @@ function sanitizeRules(input, base = DEFAULT_RULES) {
 
 const abs = (c, p) => (START[c] + p) % 52;
 const fresh = () => ({ red: [-1, -1, -1, -1], green: [-1, -1, -1, -1], yellow: [-1, -1, -1, -1], blue: [-1, -1, -1, -1] });
-const nextTurn = (R, c) => R.order[(R.order.indexOf(c) + 1) % R.order.length];
+/* next player who has not finished yet */
+const nextTurn = (R, c) => {
+  const n = R.order.length, i = R.order.indexOf(c), fin = R.finished || [];
+  for (let k = 1; k <= n; k++) { const o = R.order[(i + k) % n]; if (!fin.includes(o)) return o; }
+  return c;
+};
 const nm = (R, c) => (R.players[c] && R.players[c].name) || c;
 const canExit = (rules, d) => d === 6 || (rules.exitOn === 'one_or_six' && d === 1);
 
 function startGame(R, first) {
   Object.assign(R, { status: 'playing', turn: first, tokens: fresh(), dice: null, movable: [], last: null,
-    winner: null, sixes: 0, miss: {}, hold: null, pending: null, log: 'Game started' });
+    winner: null, finished: [], sixes: 0, miss: {}, hold: null, pending: null, log: 'Game started' });
 }
 
 function movable(R, c, d) {
@@ -88,7 +94,20 @@ function applyMove(R, c, i, d) {
   let msg = `${nm(R, c)} moved ${d}`;
   if (hit.length) msg += `, sent ${hit.map(o => nm(R, o)).join(' & ')} home`;
   if (p === 56) msg += ', a token got home!';
-  if (T[c].every(q => q === 56)) { R.status = 'done'; R.winner = c; R.log = `${nm(R, c)} wins!`; return { won: true, captured: hit, home: true }; }
+
+  if (T[c].every(q => q === 56)) {                 // this player finished all 4 tokens
+    R.finished = R.finished || []; R.finished.push(c); R.sixes = 0;
+    const rest = R.order.filter(o => !R.finished.includes(o));
+    if (rest.length <= 1) {                        // only the last player is left: game over
+      if (rest.length) R.finished.push(rest[0]);
+      R.status = 'done'; R.winner = R.finished[0]; R.log = `${nm(R, R.winner)} wins!`;
+      return { won: true, done: true, captured: hit, home: true };
+    }
+    R.turn = nextTurn(R, c);                       // game goes on without them
+    R.log = `${nm(R, c)} finished ${ORD[R.finished.length - 1]}!`;
+    return { won: true, captured: hit, home: true };
+  }
+
   const extra = (d === 6 && R.rules.extraTurnOnSix) || (hit.length && R.rules.extraTurnOnCapture) || (p === 56 && R.rules.extraTurnOnHome);
   if (extra) R.turn = c; else { R.turn = nextTurn(R, c); R.sixes = 0; }
   R.log = msg;
@@ -136,4 +155,4 @@ function chooseMove(R, c, d, mv) {
   return best;
 }
 
-module.exports = { COLORS, START, SAFE, DEFAULT_RULES, sanitizeRules, abs, fresh, nextTurn, startGame, movable, victims, applyMove, rollDie, endHold, chooseMove };
+module.exports = { COLORS, START, SAFE, ORD, DEFAULT_RULES, sanitizeRules, abs, fresh, nextTurn, startGame, movable, victims, applyMove, rollDie, endHold, chooseMove };
