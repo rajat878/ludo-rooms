@@ -211,10 +211,20 @@ const err=m=>{const e=document.getElementById('msg');if(e)e.textContent=m};
 
 /* ---------- sound ---------- */
 let AC=null,mute=ls.get('ludo.mute')==='1';
-function unlock(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}catch(e){}}
+let spPrimed=false,lastSpeak=0;
+function unlock(){try{if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume()}catch(e){}
+  try{if(!spPrimed&&'speechSynthesis' in window){spPrimed=true;const u=new SpeechSynthesisUtterance(' ');u.volume=0;speechSynthesis.speak(u);speechSynthesis.getVoices()}}catch(e){}}
+/* voice line (Hindi) spoken when a token is captured */
+function say(t){
+  if(mute||!('speechSynthesis' in window))return;
+  const n=Date.now();if(n-lastSpeak<2500)return;lastSpeak=n;
+  try{const u=new SpeechSynthesisUtterance(t);u.lang='hi-IN';
+    const v=speechSynthesis.getVoices().find(x=>/^hi/i.test(x.lang));if(v)u.voice=v;
+    u.rate=1;u.pitch=1.15;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u)}catch(e){}
+}
 function tone(f,d,type,v,w){if(mute||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(w||0);o.type=type||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
 const sfx={roll(){for(let k=0;k<4;k++)tone(200+Math.random()*300,.05,'square',.05,k*.09)},hop(){tone(540,.07,'triangle',.14)},
-cap(){tone(330,.12,'sawtooth',.09);tone(160,.25,'sawtooth',.09,.1)},home(){tone(660,.1,'sine',.15);tone(880,.2,'sine',.15,.1)},
+cap(){tone(330,.12,'sawtooth',.09);tone(160,.25,'sawtooth',.09,.1);setTimeout(()=>say('मज़ा आ गया!'),350)},home(){tone(660,.1,'sine',.15);tone(880,.2,'sine',.15,.1)},
 nomove(){tone(240,.2,'sawtooth',.07);tone(180,.25,'sawtooth',.07,.15)},
 turn(){tone(780,.08,'sine',.1);tone(1040,.1,'sine',.1,.09)},win(){[523,659,784,1047].forEach((f,k)=>tone(f,.28,'triangle',.15,k*.14))}};
 document.addEventListener('pointerdown',unlock);
