@@ -33,7 +33,7 @@ button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7d
 .pi{flex:1;min-width:0}.pn{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps{font-size:11px;color:var(--mut);min-height:14px}
 .ds{width:60px;height:60px;flex:none;display:grid;place-items:center}.tb{position:absolute;left:0;bottom:0;right:0;height:4px;background:rgba(255,255,255,.08)}.tb i{display:block;height:100%;width:100%;background:var(--c);transition:width .25s linear}
 .bwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
-.board{width:min(100%,calc(var(--vh) - 264px));height:auto;display:block;border-radius:16px;background:#22222c;box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.07),0 0 46px -8px var(--tc,transparent);transition:box-shadow .4s;touch-action:manipulation}
+.board{width:min(100%,calc(var(--vh) - 292px));height:auto;display:block;border-radius:16px;background:#22222c;box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.07),0 0 46px -8px var(--tc,transparent);transition:box-shadow .4s;touch-action:manipulation}
 .foot{text-align:center;flex:none;min-height:40px}.status{font-weight:800}.log{color:var(--mut);font-size:13px}
 .dice{width:58px;height:58px;box-sizing:border-box;border-radius:15px;background:linear-gradient(145deg,#fff,#d9d5ca);border:3px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28),0 8px 14px rgba(0,0,0,.35);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:8px;gap:2px;color:#222}
 .dice i{border-radius:50%}.dice i.p{background:radial-gradient(circle at 35% 30%,#555,#111)}.dice b{grid-area:1/1/4/4;display:grid;place-items:center;font-size:12px;letter-spacing:.05em}
@@ -120,6 +120,14 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 .pc{border-left:3px solid var(--c)!important}.pc .ds{width:54px;height:54px}.pc .dice{width:52px;height:52px;padding:7px}
 .pc.on .ds{width:58px;height:58px}.pc.on .dice{width:56px;height:56px;padding:7px;border-radius:15px}.pc .pn{font-size:13px}
 @media (max-height:700px){.tag{display:none}}
+.row{height:90px}
+.pa{display:flex;flex-direction:column;align-items:center;gap:3px;width:64px;flex:none;min-width:0}
+.pa .pn{font-size:11px;max-width:100%;text-align:center;line-height:1.1}
+.pc .pi{flex:1;display:grid;place-items:center;text-align:center;min-width:0}.pc .pi .ps{font-size:13px;font-weight:800;white-space:nowrap;min-height:0}
+.pc.on .pi .ps{color:#fff;font-size:16px}
+.pc .ds{width:50px;height:50px}.pc .dice{width:48px;height:48px;padding:6px;border-radius:13px}
+.pc.on .ds{width:54px;height:54px}.pc.on .dice{width:52px;height:52px;padding:7px;border-radius:14px}
+.pc{padding:6px 8px 6px 8px;gap:4px}
 </style></head>
 <body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
@@ -248,7 +256,7 @@ function home(msg){
   <div class="glass"><div class="pf"><div class="pfw" id="pfw"><div class="pfa" id="pfa">📷</div><span class="pfb">✎</span></div><div><div class="pfh need" id="pfh"></div><div class="pfs">Your profile photo (required)</div></div></div>
   <input type="file" id="pfile" accept="image/*" hidden>
   <label>YOUR NAME</label>
-  <input id="nm" maxlength="12" placeholder="e.g. Lv" value="${esc(ls.get('ludo.name')||'')}">
+  <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
   <button id="mk" class="pri">Create room</button>
   <div class="or">or join a friend’s room</div>
   <input id="cd" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
@@ -399,8 +407,8 @@ function playerCard(S,c){
   const p=S.players[c];if(!p)return '<div></div>';
   const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!S.hold&&!animating(),held=on&&!!S.hold;
   const face=rl?1+Math.floor(Math.random()*6):hist[c];
-  const sub=on?(held?'':'<span id="tm"></span>'):(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
-  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38">${avFace(c,34)}<div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
+  const sub=on?(held?'':'<span id="tm"></span>'):(p.auto?'🤖':c===me?'You':(p.on?'':'📴'));
+  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38"><div class="pa">${avFace(c,56)}<div class="pn">${esc(p.name)}</div></div><div class="pi"><div class="ps">${sub}</div></div>
   <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${held?'held':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
