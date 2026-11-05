@@ -2,46 +2,56 @@
 <html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#17171a">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#14141c">
 <title>Ludo Rooms</title>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
 <style>
-:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);--bg:#f6f3ec;--fg:#1d1d1f;--card:#fff;--line:#cfc9ba;--cell:#fff;--mut:#6b6b70}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}}
-:root[data-theme="dark"]{--bg:#17171a;--fg:#f2f2f2;--card:#232328;--line:#4a4a54;--cell:#2c2c33;--mut:#a0a0a8}
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;
+--vh:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px));--fg:#f4f4f8;--mut:#a4a4b6;--line:#3a3a48;--card:#22222c}
 *{-webkit-tap-highlight-color:transparent}
-html{scroll-padding-top:env(safe-area-inset-top,0px)}
-body{margin:0;background:var(--bg);color:var(--fg);font:16px/1.4 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none}
-#app{max-width:480px;margin:0 auto;padding:12px}
-h1{margin:6px 0 2px;font-size:28px}.sub{color:var(--mut);margin:0 0 14px}
-.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:16px}
-input{width:100%;box-sizing:border-box;font:inherit;padding:12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--fg);margin:6px 0 10px;-webkit-user-select:text;user-select:text}
+html{scroll-padding-top:env(safe-area-inset-top,0px);background:#14141c}
+body{margin:0;color:var(--fg);font:16px/1.35 -apple-system,system-ui,"Segoe UI",Roboto,sans-serif;-webkit-user-select:none;user-select:none;overscroll-behavior:none;
+background:radial-gradient(120% 80% at 50% -10%,#303466 0%,#14141c 62%) fixed,#14141c}
+#app{height:var(--vh);max-width:640px;margin:0 auto;padding:6px 8px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;gap:6px}
+h1{margin:6px 0 2px;font-size:30px}.sub{color:var(--mut);margin:0 0 14px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:18px;padding:16px;margin:auto 0}
+input{width:100%;box-sizing:border-box;font:inherit;font-size:16px;padding:12px;border-radius:12px;border:1px solid var(--line);background:#16161d;color:var(--fg);margin:6px 0 10px;-webkit-user-select:text;user-select:text}
 #cd{text-transform:uppercase;letter-spacing:.3em;text-align:center;font-weight:700}
-button{font:inherit;font-weight:600;padding:12px 16px;border-radius:12px;border:1px solid var(--line);background:var(--card);color:var(--fg);width:100%;cursor:pointer}
-button.pri{background:#2f7de1;border-color:#2f7de1;color:#fff}button:disabled{opacity:.45}
-.or{text-align:center;color:var(--mut);margin:12px 0 2px;font-size:14px}.msg{color:#e5483f;min-height:1.2em;margin:8px 0 0;font-size:14px}
-.top{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
-.code{font-weight:800;letter-spacing:.25em;font-size:20px}
-.btns{display:flex;gap:6px}.btns button{width:auto;padding:8px 11px;font-size:14px}
-.board{width:100%;height:auto;display:block;border-radius:14px;background:var(--card);box-shadow:0 6px 24px rgba(0,0,0,.25);touch-action:manipulation}
-.players{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
-.chip{flex:1 1 45%;display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:10px;border:2px solid var(--line);background:var(--card);font-size:14px;min-width:0}
-.chip.on{border-color:var(--fg)}.chip i{width:14px;height:14px;border-radius:50%;flex:none}
-.chip span{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1}.tm{font-variant-numeric:tabular-nums;color:var(--mut);font-size:13px}
-.dicewrap{display:flex;flex-direction:column;align-items:center;gap:8px;margin:12px 0 6px;text-align:center}
-.dice{width:84px;height:84px;box-sizing:border-box;border-radius:20px;background:linear-gradient(145deg,#fff,#d9d5ca);border:4px solid var(--line);box-shadow:0 6px 0 rgba(0,0,0,.22),0 12px 22px rgba(0,0,0,.3);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:11px;gap:3px}
-.dice i{border-radius:50%}.dice i.p{background:radial-gradient(circle at 35% 30%,#555,#111)}
-.dice.my{cursor:pointer;animation:bob 1s ease-in-out infinite}
-@keyframes bob{50%{transform:translateY(-6px) scale(1.07)}}
-.dice.roll{animation:shake .14s linear infinite}
-@keyframes shake{0%{transform:rotate(-14deg) translateY(-8px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-8px)}}
-.status{font-weight:700}.log{color:var(--mut);font-size:14px}
+button{font:inherit;font-weight:700;padding:12px 16px;border-radius:14px;border:1px solid var(--line);background:#2b2b38;color:var(--fg);width:100%;cursor:pointer}
+button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7de1;color:#fff}button:disabled{opacity:.45}
+.or{text-align:center;color:var(--mut);margin:12px 0 2px;font-size:14px}.msg{color:#ff7a70;min-height:1.2em;margin:8px 0 0;font-size:14px}
+.bar{height:40px;display:flex;justify-content:space-between;align-items:center;flex:none}
+.rt small{display:block;font-size:10px;letter-spacing:.2em;color:var(--mut);line-height:1}.rt b{font-size:20px;letter-spacing:.22em}
+.btns{display:flex;gap:6px}.ib{position:relative;width:38px;height:38px;padding:0;border-radius:50%;font-size:17px;background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.12)}
+.bd{position:absolute;top:-3px;right:-3px;min-width:17px;height:17px;border-radius:9px;background:#e5483f;color:#fff;font-size:11px;line-height:17px;font-weight:800}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px;height:68px;flex:none}
+.pc{display:flex;align-items:center;gap:6px;padding:6px 8px;border-radius:16px;background:rgba(255,255,255,.06);border:2px solid rgba(255,255,255,.1);position:relative;overflow:hidden;min-width:0}
+.pc.on{border-color:var(--c);box-shadow:0 0 18px -2px var(--c);background:rgba(255,255,255,.12)}
+.av{width:28px;height:28px;border-radius:50%;display:grid;place-items:center;font-weight:800;color:#fff;flex:none;font-size:14px;box-shadow:inset 0 -3px 0 rgba(0,0,0,.2)}
+.pi{flex:1;min-width:0}.pn{font-weight:700;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.ps{font-size:11px;color:var(--mut);min-height:14px}
+.ds{width:54px;height:54px;flex:none}.tb{position:absolute;left:0;bottom:0;right:0;height:4px;background:rgba(255,255,255,.08)}.tb i{display:block;height:100%;width:100%;background:var(--c);transition:width .25s linear}
+.bwrap{flex:1;min-height:0;display:flex;align-items:center;justify-content:center}
+.board{width:min(100%,calc(var(--vh) - 250px));height:auto;display:block;border-radius:16px;background:#22222c;box-shadow:0 10px 34px rgba(0,0,0,.5),0 0 0 3px rgba(255,255,255,.07);touch-action:manipulation}
+.foot{text-align:center;flex:none;min-height:40px}.status{font-weight:800}.log{color:var(--mut);font-size:13px}
+.dice{width:54px;height:54px;box-sizing:border-box;border-radius:14px;background:linear-gradient(145deg,#fff,#d9d5ca);border:3px solid var(--line);box-shadow:0 4px 0 rgba(0,0,0,.28),0 8px 14px rgba(0,0,0,.35);display:grid;grid-template:repeat(3,1fr)/repeat(3,1fr);padding:7px;gap:2px;color:#222}
+.dice i{border-radius:50%}.dice i.p{background:radial-gradient(circle at 35% 30%,#555,#111)}.dice b{grid-area:1/1/4/4;display:grid;place-items:center;font-size:12px;letter-spacing:.05em}
+.dice.my{cursor:pointer;animation:bob 1s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-4px) scale(1.1)}}
+.dice.roll{animation:shake .14s linear infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-5px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-5px)}}
 .mv{animation:pulse .9s infinite}@keyframes pulse{50%{opacity:.25}}.tk{cursor:pointer}
-.conf{position:fixed;inset:0;pointer-events:none;overflow:hidden}
-.conf i{position:absolute;top:-16px;width:9px;height:14px;animation:fall linear forwards}
-@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+.lob{margin:auto 0;text-align:center;display:flex;flex-direction:column;gap:10px}.bigcode{font-size:56px;font-weight:900;letter-spacing:.2em;margin-right:-.2em}
+.seats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seat{display:flex;align-items:center;gap:8px;padding:12px;border-radius:16px;background:rgba(255,255,255,.07);border:2px solid var(--c)}.seat.empty{border:2px dashed var(--line);opacity:.7}
+.ov{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:15}.ovc{background:#23232d;border-radius:22px;padding:22px;text-align:center;width:min(86vw,340px);display:flex;flex-direction:column;gap:10px}.ovc h2{margin:0}
+.conf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}.conf i{position:absolute;top:-16px;width:9px;height:14px;animation:fall linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
+#toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:#000c;padding:8px 14px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40}#toast.show{opacity:1}
+#chat{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;height:min(64dvh,500px);background:#1b1b24;border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.6);transform:translateY(105%);transition:transform .28s;display:flex;flex-direction:column;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}#chat.open{transform:none}
+.sh{display:flex;justify-content:space-between;align-items:center;padding:10px 14px}.cl{flex:1;overflow-y:auto;padding:4px 14px;display:flex;flex-direction:column;gap:6px;-webkit-user-select:text;user-select:text}
+.m{background:rgba(255,255,255,.08);padding:7px 11px;border-radius:14px 14px 14px 4px;align-self:flex-start;max-width:85%;font-size:15px;word-break:break-word}.m b{display:block;font-size:11px}.m.me{align-self:flex-end;background:#2f7de1;border-radius:14px 14px 4px 14px}.m.me b{color:#fff!important;opacity:.8}.empty{color:var(--mut);text-align:center;margin:auto}
+.qr{display:flex;gap:6px;padding:6px 14px;justify-content:space-between}.q{font-size:20px}.qp{display:flex;gap:6px;padding:0 14px 6px;overflow-x:auto}.chipb{width:auto;white-space:nowrap;padding:7px 12px;font-size:13px;border-radius:18px}
+.ci{display:flex;gap:8px;padding:6px 14px 12px}.ci input{margin:0;flex:1}.ci button{width:80px}
+.bub{position:fixed;z-index:25;background:#fff;color:#111;padding:7px 12px;border-radius:14px;font-size:14px;font-weight:600;max-width:70vw;box-shadow:0 4px 14px #0008;border:3px solid var(--c);animation:pop .25s ease-out}@keyframes pop{from{transform:scale(.6);opacity:0}}
+.fl{position:fixed;z-index:25;font-size:38px;pointer-events:none;animation:up 2.1s ease-out forwards}@keyframes up{to{transform:translateY(-110px) scale(1.5);opacity:0}}
 </style></head>
-<body><div id="app"></div>
+<body><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const COLORS=['red','green','yellow','blue'];
@@ -65,7 +75,7 @@ const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;',
 const clone=o=>JSON.parse(JSON.stringify(o));
 const nm=(S,c)=>(S.players[c]&&S.players[c].name)||c;
 const abs=(c,p)=>(START[c]+p)%52;
-const toast=t=>{const m=document.getElementById('tmsg');if(m)m.textContent=t};
+const toast=t=>{let e=document.getElementById('toast');if(!e){e=document.createElement('div');e.id='toast';document.body.appendChild(e)}e.textContent=t;e.className='show';clearTimeout(e._t);e._t=setTimeout(()=>e.className='',2200)};
 const err=m=>{const e=document.getElementById('msg');if(e)e.textContent=m};
 
 /* ---------- sound ---------- */
@@ -134,7 +144,7 @@ function rollTap(){
 }
 function tap(c,i){if(state&&c===state.me&&!animating()&&state.dice!=null&&state.movable.includes(i))socket.emit('move',i)}
 function start(){socket.emit('start')}
-function leave(){socket.emit('leave');ls.del('ludo.room');home()}
+function leave(){socket.emit('leave');toggleChat(false);chat=[];ls.del('ludo.room');home()}
 function invite(){
   const t=`Join my Ludo game! Room code: ${state.code}`,u=location.origin;
   if(navigator.share){navigator.share({title:'Ludo Rooms',text:t,url:u}).catch(()=>{})}
@@ -186,7 +196,7 @@ function drawTokens(){
     if(anim){const st=cur.steps[cur.k],b=pos(c,st.p,i),u=cur.u,e=u*u*(3-2*u);x+=(b[0]-x)*e;y+=(b[1]-y)*e;lift=st.kind==='back'?0:Math.sin(u*Math.PI)*.45}
     else if(p>=0){const k=x+','+y;seen[k]=(seen[k]||0)+1;const n=seen[k]-1;x+=n*.2;y-=n*.2}
     const can=!anim&&c===me&&mv.includes(i),sc=1+lift*.6;
-    const t=`<g class="tk" data-c="${c}" data-i="${i}">${can?`<circle class="mv" cx="${x}" cy="${y}" r=".53" fill="none" stroke="var(--fg)" stroke-width=".12"/>`:''}
+    const t=`<g class="tk" data-c="${c}" data-i="${i}">${can?`<circle class="mv" cx="${x}" cy="${y}" r=".55" fill="none" stroke="#000" stroke-opacity=".7" stroke-width=".16"/><circle class="mv" cx="${x}" cy="${y}" r=".55" fill="none" stroke="#fff" stroke-width=".07"/>`:''}
     <ellipse cx="${x}" cy="${y+.16}" rx="${r*.9/sc}" ry="${r*.35/sc}" fill="#000" opacity=".28"/>
     <circle cx="${x}" cy="${y-lift}" r="${r*sc}" fill="url(#g-${c})" stroke="#fff" stroke-width=".08"/>
     <circle cx="${x-r*.3}" cy="${y-lift-r*.35}" r="${r*.22}" fill="#fff" opacity=".6"/><circle cx="${x}" cy="${y-lift}" r=".55" fill="transparent"/></g>`;
@@ -198,46 +208,87 @@ function drawTokens(){
 /* ---------- board + screen ---------- */
 function boardSVG(S){
   let s='<svg viewBox="0 0 15 15" class="board" id="bd"><defs>'+COLORS.map(c=>`<radialGradient id="g-${c}" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${LIGHT[c]}"/><stop offset="1" stop-color="${HEX[c]}"/></radialGradient>`).join('')+'</defs>';
-  COLORS.forEach(c=>{const[ox,oy]=ORG[c],on=S.status==='playing'&&S.turn===c;
-    s+=`<rect x="${ox}" y="${oy}" width="6" height="6" fill="${HEX[c]}" ${on?'stroke="var(--fg)" stroke-width=".18"':''}/><rect x="${ox+1}" y="${oy+1}" width="4" height="4" rx=".5" fill="var(--cell)"/>`;
-    [[2,2],[4,2],[2,4],[4,4]].forEach(q=>s+=`<circle cx="${ox+q[0]}" cy="${oy+q[1]}" r=".5" fill="${HEX[c]}" opacity=".25"/>`)});
+  COLORS.forEach(c=>{const[ox,oy]=ORG[c],on=S.status==='playing'&&S.turn===c,p=S.players[c];
+    s+=`<rect x="${ox}" y="${oy}" width="6" height="6" fill="${HEX[c]}" ${on?'stroke="#fff" stroke-width=".2"':''}/><rect x="${ox+1}" y="${oy+1}" width="4" height="4" rx=".5" fill="#f7f4ea"/>`;
+    [[2,2],[4,2],[2,4],[4,4]].forEach(q=>s+=`<circle cx="${ox+q[0]}" cy="${oy+q[1]}" r=".5" fill="${HEX[c]}" opacity=".22"/>`);
+    if(p)s+=`<text x="${ox+3}" y="${oy===0?.7:oy+5.7}" font-size=".5" font-weight="800" text-anchor="middle" fill="#fff" stroke="rgba(0,0,0,.5)" stroke-width=".11" paint-order="stroke" style="letter-spacing:.02em">${esc(p.name.slice(0,12))}</text>`});
   PATH.forEach(([x,y],i)=>{const st=COLORS.find(c=>START[c]===i);
-    s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${st?HEX[st]:'var(--cell)'}" stroke="var(--line)" stroke-width=".05"/>`;
-    if(!st&&SAFE.has(i))s+=`<text x="${x+.5}" y="${y+.74}" font-size=".6" text-anchor="middle" fill="var(--line)">★</text>`});
-  COLORS.forEach(c=>{for(let k=0;k<5;k++){const[x,y]=HOME[c](k);s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${HEX[c]}" opacity=".6" stroke="var(--line)" stroke-width=".05"/>`}});
+    s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${st?HEX[st]:'#f7f4ea'}" stroke="#cfc9b6" stroke-width=".05"/>`;
+    if(!st&&SAFE.has(i))s+=`<text x="${x+.5}" y="${y+.74}" font-size=".6" text-anchor="middle" fill="#cfc9b6">★</text>`});
+  COLORS.forEach(c=>{for(let k=0;k<5;k++){const[x,y]=HOME[c](k);s+=`<rect x="${x}" y="${y}" width="1" height="1" fill="${HEX[c]}" opacity=".65" stroke="#cfc9b6" stroke-width=".05"/>`}});
   s+=`<polygon points="6,6 6,9 7.5,7.5" fill="${HEX.red}"/><polygon points="6,6 9,6 7.5,7.5" fill="${HEX.green}"/><polygon points="9,6 9,9 7.5,7.5" fill="${HEX.yellow}"/><polygon points="6,9 9,9 7.5,7.5" fill="${HEX.blue}"/><g id="tl"></g></svg>`;
   return s;
 }
+function topbar(S){
+  return `<div class="bar"><div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div><div class="btns">
+  <button id="cbtn" class="ib">💬<span class="bd" id="cb" ${unread?'':'hidden'}>${unread}</span></button><button id="iv" class="ib">📨</button><button id="mt" class="ib">${mute?'🔇':'🔊'}</button><button id="lv" class="ib">✕</button></div></div>`;
+}
+function playerCard(S,c){
+  const p=S.players[c];if(!p)return '<div></div>';
+  const on=S.status==='playing'&&S.turn===c,me=S.me,rl=rolling(),canRoll=on&&c===me&&S.dice==null&&!animating();
+  let dice='';
+  if(on){const face=rl?1+Math.floor(Math.random()*6):(S.last&&S.last.c===c?S.last.d:0);
+    dice=`<div id="dice" class="dice ${rl?'roll':''} ${canRoll?'my':''}" style="border-color:${HEX[c]}">${face||!canRoll?pips(face):'<b>TAP</b>'}</div>`}
+  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div>
+  <div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${on?'<span id="tm"></span>':(c===me?'You':(p.on?'':'offline'))}</div></div><div class="ds">${dice}</div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
+}
 function render(){
   const S=state;if(!S)return;
-  const me=S.me,mine=S.status==='playing'&&S.turn===me,rl=rolling(),canRoll=mine&&S.dice==null&&!animating();
-  let h=`<div class="top"><div><div class="sub" style="margin:0">Room code</div><div class="code">${esc(S.code)}</div></div>
-  <div class="btns"><button id="iv">Invite</button><button id="mt">${mute?'🔇':'🔊'}</button><button id="lv">Leave</button></div></div>${boardSVG(S)}<div class="players">`;
-  COLORS.forEach(c=>{const p=S.players[c];if(!p&&S.status!=='lobby')return;const on=S.status==='playing'&&S.turn===c;
-    h+=`<div class="chip ${on?'on':''}"><i style="background:${HEX[c]}"></i><span>${p?esc(p.name)+(c===me?' (you)':'')+(p.on?'':' (offline)'):'Empty seat'}</span>${on?'<b class="tm" id="tm"></b>':''}</div>`});
-  h+='</div>';
+  let h=topbar(S);
   if(S.status==='lobby'){
     const n=COLORS.filter(c=>S.players[c]).length;
-    h+=`<div class="dicewrap"><div class="status">Waiting for friends (${n}/4)</div><div class="log">Tap Invite to send the code</div></div>`;
-    if(S.isHost)h+=`<button id="st" class="pri" ${n<2?'disabled':''}>Start game</button>`;
+    h+=`<div class="lob"><div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
+    COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
+    `</div><button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
   }else{
-    const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:mine?(S.dice==null?'Your turn: tap the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
-    const face=rl?1+Math.floor(Math.random()*6):(S.last?S.last.d:0),bc=canRoll?HEX[me]:(S.last?HEX[S.last.c]:'var(--line)');
-    h+=`<div class="dicewrap"><div id="dice" class="dice ${rl?'roll':''} ${canRoll?'my':''}" style="border-color:${bc}">${pips(face)}</div><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
-    if(S.status==='done'&&S.isHost)h+='<button id="st" class="pri">Play again</button>';
+    const mine=S.status==='playing'&&S.turn===S.me;
+    const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:mine?(S.dice==null?'Your turn: tap your dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
+    h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
+    <div class="foot"><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
+    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2>${S.isHost?'<button id="st" class="pri">Play again</button>':'<p class="sub">Waiting for the host to restart…</p>'}<button id="lv2">Leave room</button></div></div>`;
   }
-  h+='<p class="msg" id="tmsg"></p>';
   app.innerHTML=h;
   const $=id=>document.getElementById(id);
-  $('iv').onclick=invite;$('lv').onclick=leave;
+  $('iv').onclick=invite;$('lv').onclick=leave;$('cbtn').onclick=()=>toggleChat(!chatOpen);
   $('mt').onclick=()=>{mute=!mute;ls.set('ludo.mute',mute?'1':'0');unlock();$('mt').textContent=mute?'🔇':'🔊'};
-  if($('st'))$('st').onclick=start;
+  ['st'].forEach(k=>{if($(k))$(k).onclick=start});if($('inv2'))$('inv2').onclick=invite;if($('lv2'))$('lv2').onclick=leave;
   if($('dice'))$('dice').onclick=rollTap;
-  $('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
+  if($('bd'))$('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
   drawTokens();updateTimer();
 }
-function updateTimer(){const e=document.getElementById('tm');if(e&&state&&state.status==='playing')e.textContent=Math.max(0,state.left-Math.floor((Date.now()-recv)/1000))+'s'}
-setInterval(updateTimer,500);
+function updateTimer(){
+  const e=document.getElementById('tm');if(!e||!state||state.status!=='playing')return;
+  const left=Math.max(0,state.left-(Date.now()-recv)/1000);e.textContent=Math.ceil(left)+'s';
+  const b=document.getElementById('tb');if(b)b.style.width=Math.min(100,left/Math.max(1,state.tot)*100)+'%';
+}
+setInterval(updateTimer,250);
+
+/* ---------- chat ---------- */
+let chat=[],chatOpen=false,unread=0;
+const REACTS=['😂','👏','😡','🔥','❤️','😭'],PHRASES=['Good luck! 🍀','Nice move! 👏','Hurry up ⏰','Oops 😅','GG 🤝'];
+document.getElementById('chat').innerHTML=`<div class="sh"><b>Chat</b><button class="ib" id="cx">✕</button></div><div class="cl" id="cl"></div>
+<div class="qr">${REACTS.map(e=>`<button class="ib q" data-e="${e}">${e}</button>`).join('')}</div>
+<div class="qp">${PHRASES.map(p=>`<button class="chipb" data-p="${p}">${p}</button>`).join('')}</div>
+<div class="ci"><input id="cin" maxlength="140" placeholder="Type a message…" autocomplete="off"><button id="csend" class="pri">Send</button></div>`;
+const chatEl=document.getElementById('chat');
+function setBadge(){const b=document.getElementById('cb');if(b){b.textContent=unread;b.hidden=!unread}}
+function toggleChat(o){chatOpen=o;chatEl.classList.toggle('open',o);if(o){unread=0;setBadge();renderChat()}else{const i=document.getElementById('cin');if(i)i.blur()}}
+function renderChat(){const l=document.getElementById('cl');
+  l.innerHTML=chat.map(m=>`<div class="m ${state&&m.c===state.me?'me':''}"><b style="color:${HEX[m.c]||'#fff'}">${esc(m.name)}</b><span>${esc(m.text)}</span></div>`).join('')||'<div class="empty">No messages yet. Say hi 👋</div>';
+  l.scrollTop=l.scrollHeight}
+function sendChat(t){t=(t||'').trim();if(t)socket.emit('chat',t)}
+document.getElementById('cx').onclick=()=>toggleChat(false);
+document.getElementById('csend').onclick=()=>{const i=document.getElementById('cin');sendChat(i.value);i.value=''};
+document.getElementById('cin').onkeydown=e=>{if(e.key==='Enter'){sendChat(e.target.value);e.target.value=''}};
+chatEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.e)socket.emit('react',b.dataset.e);if(b.dataset.p)sendChat(b.dataset.p)});
+function anchor(c){const el=document.getElementById('pc-'+c);return el?el.getBoundingClientRect():null}
+function bubble(c,text){const r=anchor(c);if(!r||chatOpen)return;const d=document.createElement('div');d.className='bub';d.style.setProperty('--c',HEX[c]);d.textContent=text.slice(0,48);
+  document.body.appendChild(d);const w=d.offsetWidth;d.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';
+  d.style[r.top>innerHeight/2?'bottom':'top']=(r.top>innerHeight/2?innerHeight-r.top+6:r.bottom+6)+'px';setTimeout(()=>d.remove(),3400)}
+function floatEmoji(c,e){const r=anchor(c);if(!r)return;const d=document.createElement('div');d.className='fl';d.textContent=e;d.style.left=(r.left+r.width/2-20)+'px';d.style.top=(r.top)+'px';document.body.appendChild(d);setTimeout(()=>d.remove(),2200)}
+socket.on('chatlog',a=>{chat=a;if(chatOpen)renderChat()});
+socket.on('chat',m=>{chat.push(m);if(chat.length>50)chat.shift();if(chatOpen)renderChat();else{unread++;setBadge()}bubble(m.c,m.text)});
+socket.on('react',r=>{floatEmoji(r.c,r.e);sfx.hop()});
 
 /* ---------- win ---------- */
 function maybeCelebrate(){
