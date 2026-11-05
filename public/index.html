@@ -55,11 +55,6 @@ h1 b,.brand{letter-spacing:.02em}
 .ov{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:15}.ovc{background:#23232d;border-radius:22px;padding:22px;text-align:center;width:min(86vw,340px);display:flex;flex-direction:column;gap:10px}.ovc h2{margin:0}
 .conf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}.conf i{position:absolute;top:-16px;width:9px;height:14px;animation:fall linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
 #toast{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 56px);transform:translateX(-50%);background:#000c;padding:8px 14px;border-radius:20px;font-size:14px;opacity:0;transition:opacity .25s;pointer-events:none;z-index:40}#toast.show{opacity:1}
-#chat{position:fixed;left:0;right:0;bottom:0;max-width:640px;margin:0 auto;height:min(64dvh,500px);background:#1b1b24;border-radius:22px 22px 0 0;box-shadow:0 -10px 40px rgba(0,0,0,.6);transform:translateY(105%);transition:transform .28s;display:flex;flex-direction:column;z-index:20;padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box}#chat.open{transform:none}
-.sh{display:flex;justify-content:space-between;align-items:center;padding:10px 14px}.cl{flex:1;overflow-y:auto;padding:4px 14px;display:flex;flex-direction:column;gap:6px;-webkit-user-select:text;user-select:text}
-.m{background:rgba(255,255,255,.08);padding:7px 11px;border-radius:14px 14px 14px 4px;align-self:flex-start;max-width:85%;font-size:15px;word-break:break-word}.m b{display:block;font-size:11px}.m.me{align-self:flex-end;background:#2f7de1;border-radius:14px 14px 4px 14px}.m.me b{color:#fff!important;opacity:.8}.empty{color:var(--mut);text-align:center;margin:auto}
-.qr{display:flex;gap:6px;padding:6px 14px;justify-content:space-between}.q{font-size:20px}.qp{display:flex;flex-wrap:wrap;gap:6px;padding:0 14px 6px}.chipb{width:auto;white-space:nowrap;padding:7px 12px;font-size:13px;border-radius:18px}
-.ci{display:flex;gap:8px;padding:6px 14px 12px}.ci input{margin:0;flex:1}.ci button{width:80px}
 .bub{position:fixed;z-index:25;background:#fff;color:#111;padding:7px 12px;border-radius:14px;font-size:14px;font-weight:600;max-width:70vw;box-shadow:0 4px 14px #0008;border:3px solid var(--c);animation:pop .25s ease-out}@keyframes pop{from{transform:scale(.6);opacity:0}}
 .fl{position:fixed;z-index:25;font-size:38px;pointer-events:none;animation:up 2.1s ease-out forwards}@keyframes up{to{transform:translateY(-110px) scale(1.5);opacity:0}}
 
@@ -135,6 +130,55 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 .rkr{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:14px;background:rgba(255,255,255,.07);border-left:5px solid var(--c);font-size:16px}
 .rkr .md{font-size:24px;width:30px;text-align:center}
 .rkr b{flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* ---------- Rajat's Chatbox ---------- */
+#chat{position:fixed;inset:0;z-index:20;visibility:hidden;transition:visibility 0s .3s}
+#chat.open{visibility:visible;transition:none}
+.cbk{position:absolute;inset:0;background:rgba(0,0,0,.5);opacity:0;transition:opacity .25s;-webkit-backdrop-filter:blur(3px);backdrop-filter:blur(3px)}
+#chat.open .cbk{opacity:1}
+.csheet{position:absolute;left:0;right:0;bottom:var(--kb,0px);max-width:560px;margin:0 auto;height:min(78dvh,640px,calc(var(--vvh,100dvh) - 12px));
+ display:flex;flex-direction:column;background:linear-gradient(180deg,#242432,#16161e);border:1px solid rgba(255,255,255,.1);border-bottom:0;border-radius:24px 24px 0 0;
+ box-shadow:0 -16px 50px rgba(0,0,0,.6);transform:translateY(104%);transition:transform .3s cubic-bezier(.2,.8,.2,1);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;overflow:hidden}
+#chat.open .csheet{transform:none}
+.cgrab{width:40px;height:4px;border-radius:2px;background:rgba(255,255,255,.22);margin:8px auto 0;flex:none}
+.chd{display:flex;align-items:center;gap:10px;padding:10px 14px 12px;border-bottom:1px solid rgba(255,255,255,.08);flex:none}
+.cico{width:38px;height:38px;border-radius:12px;display:grid;place-items:center;font-size:19px;background:linear-gradient(135deg,#4b95f5,#7a5cf0);box-shadow:0 6px 16px -4px #4b95f5}
+.cti{flex:1;min-width:0;line-height:1.15}
+.cti b{display:block;font-size:17px;letter-spacing:.01em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.cti span{font-size:12px;color:var(--mut);display:flex;align-items:center;gap:6px}
+.cti span:before{content:"";width:7px;height:7px;border-radius:50%;background:#3ddc84;box-shadow:0 0 8px #3ddc84}
+.cx{width:34px;height:34px;padding:0;border-radius:50%;background:rgba(255,255,255,.08);border-color:transparent;font-size:15px}
+.cl{flex:1;min-height:0;overflow-y:auto;overscroll-behavior:contain;padding:12px 12px 6px;display:flex;flex-direction:column;gap:3px;-webkit-user-select:text;user-select:text;scroll-behavior:smooth}
+.mr{display:flex;align-items:flex-end;gap:8px;max-width:88%;align-self:flex-start}
+.mr.first{margin-top:9px}.mr.me{align-self:flex-end;flex-direction:row-reverse}
+.mav{width:30px;flex:none}
+.mb{min-width:0}
+.mh{display:flex;align-items:baseline;gap:8px;margin:0 4px 3px}.mr.me .mh{justify-content:flex-end}
+.mh b{font-size:12px;color:var(--c)}.mh time{font-size:10px;color:var(--mut)}
+.mt{background:rgba(255,255,255,.09);padding:8px 12px;border-radius:16px;font-size:15px;line-height:1.3;word-break:break-word;border:1px solid rgba(255,255,255,.05)}
+.mr.first .mt{border-top-left-radius:6px}
+.mr.me .mt{background:linear-gradient(135deg,#4b95f5,#2f7de1);border-color:transparent;color:#fff;box-shadow:0 4px 12px -4px #2f7de1}
+.mr.me.first .mt{border-top-left-radius:16px;border-top-right-radius:6px}
+.cempty{margin:auto;text-align:center;color:var(--mut);display:flex;flex-direction:column;gap:4px;font-size:13px}
+.cempty div{font-size:38px}.cempty b{color:var(--fg);font-size:15px}
+.crx,.cph{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;scrollbar-width:none;scroll-snap-type:x proximity;flex:none}
+.crx::-webkit-scrollbar,.cph::-webkit-scrollbar{display:none}
+.crx{justify-content:space-between;border-top:1px solid rgba(255,255,255,.08)}
+.crx .q{flex:1;min-width:44px;height:40px;padding:0;font-size:21px;border-radius:12px;background:rgba(255,255,255,.07);border-color:transparent;transition:transform .12s}
+.crx .q:active{transform:scale(.85)}
+.cph{padding-top:0}
+.chipb{width:auto;flex:none;white-space:nowrap;padding:7px 13px;font-size:13px;font-weight:600;border-radius:18px;background:rgba(255,255,255,.07);border-color:rgba(255,255,255,.1);scroll-snap-align:start}
+.chipb:active{background:rgba(75,149,245,.35)}
+.cin{display:flex;align-items:center;gap:8px;padding:6px 12px 12px;flex:none}
+.cin input{margin:0;flex:1;border-radius:22px;padding:11px 16px;background:rgba(10,10,18,.6);border:1px solid rgba(255,255,255,.14);transition:border-color .15s,box-shadow .15s}
+.cin input:focus{outline:0;border-color:#4b95f5;box-shadow:0 0 0 3px rgba(75,149,245,.25)}
+.csend{width:44px;height:44px;flex:none;padding:0;border-radius:50%;display:grid;place-items:center;font-size:18px;transition:transform .12s,opacity .15s}
+.csend:active{transform:scale(.9)}
+@media(min-width:900px){
+ .cbk{background:rgba(0,0,0,.25);-webkit-backdrop-filter:none;backdrop-filter:none}
+ .csheet{left:auto;right:20px;bottom:20px;margin:0;width:380px;height:min(640px,calc(100dvh - 40px));border-radius:22px;border-bottom:1px solid rgba(255,255,255,.1)}
+}
+@media(prefers-reduced-motion:reduce){.csheet,.cbk{transition:none}.cl{scroll-behavior:auto}}
 </style></head>
 <body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
@@ -325,7 +369,7 @@ function kick(){if(!raf)raf=requestAnimationFrame(frame)}
 function buildSteps(j,c,i){
   if(j.to<0)return[{p:-1,dur:300,sfx:sfx.cap,kind:'back'}];
   if(j.from<0)return[{p:0,dur:180,sfx:sfx.hop,kind:'out'}];
-  const s=[];for(let p=j.from+1;p<=j.to;p++)s.push({p,dur:110,sfx:p===56?sfx.home:sfx.hop,kind:'hop'});return s;
+  const s=[];for(let p=j.from+1;p<=j.to;p++)s.push({p,dur:180,sfx:p===56?sfx.home:sfx.hop,kind:'hop'});return s;
 }
 function frame(){
   raf=0;const now=performance.now();
@@ -451,7 +495,7 @@ function render(){
   ['st'].forEach(k=>{if($(k))$(k).onclick=start});if($('inv2'))$('inv2').onclick=invite;app.querySelectorAll('select[data-k]').forEach(el=>el.onchange=()=>socket.emit('rules',{[el.dataset.k]:JSON.parse(el.value)}));if($('lv2'))$('lv2').onclick=leave;if($('rm'))$('rm').onclick=()=>socket.emit('rematch');
   const dm=$('dice-'+S.me);if(dm&&dm.classList.contains('my')){dm.onclick=rollTap;$('pc-'+S.me).onclick=rollTap}
   if($('bd'))$('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
-  drawTokens();updateTimer();
+  drawTokens();updateTimer();updateChatHead();
 }
 function updateTimer(){
   const e=document.getElementById('tm');if(!e||!state||state.status!=='playing')return;
@@ -460,24 +504,56 @@ function updateTimer(){
 }
 setInterval(updateTimer,250);
 
-/* ---------- chat ---------- */
+/* ---------- chat: Rajat's Chatbox ---------- */
 let chat=[],chatOpen=false,unread=0;
 const REACTS=['😂','👏','😡','🔥','❤️','😭'],PHRASES=['तू जीत के दिखा 😎🔥','इतनी आसानी से कैसे 😏','मज़ा आ गया 🤩','ओह हो! 😅','वाह! 😲','अभी तो शुरुआत है 😈'];
-document.getElementById('chat').innerHTML=`<div class="sh"><b>Chat</b><button class="ib" id="cx">✕</button></div><div class="cl" id="cl"></div>
-<div class="qr">${REACTS.map(e=>`<button class="ib q" data-e="${e}">${e}</button>`).join('')}</div>
-<div class="qp">${PHRASES.map(p=>`<button class="chipb" data-p="${p}">${p}</button>`).join('')}</div>
-<div class="ci"><input id="cin" maxlength="140" placeholder="Type a message…" autocomplete="off"><button id="csend" class="pri">Send</button></div>`;
 const chatEl=document.getElementById('chat');
+chatEl.setAttribute('role','dialog');chatEl.setAttribute('aria-label',"Rajat's Chatbox");
+chatEl.innerHTML=`<div class="cbk" id="cbk"></div><div class="csheet"><div class="cgrab"></div>
+<div class="chd"><div class="cico">💬</div><div class="cti"><b>Rajat's Chatbox</b><span id="csub">Room chat</span></div><button class="cx" id="cx" aria-label="Close chat">✕</button></div>
+<div class="cl" id="cl" aria-live="polite"></div>
+<div class="crx">${REACTS.map(e=>`<button class="q" data-e="${e}" aria-label="React ${e}">${e}</button>`).join('')}</div>
+<div class="cph">${PHRASES.map(p=>`<button class="chipb" data-p="${p}">${p}</button>`).join('')}</div>
+<div class="cin"><input id="cin" maxlength="140" placeholder="Message Rajat's Chatbox…" autocomplete="off" enterkeyhint="send"><button id="csend" class="pri csend" aria-label="Send" disabled>➤</button></div></div>`;
+const cin=document.getElementById('cin'),csend=document.getElementById('csend');
 function setBadge(){const b=document.getElementById('cb');if(b){b.textContent=unread;b.hidden=!unread}}
-function toggleChat(o){chatOpen=o;chatEl.classList.toggle('open',o);if(o){unread=0;setBadge();renderChat()}else{const i=document.getElementById('cin');if(i)i.blur()}}
-function renderChat(){const l=document.getElementById('cl');
-  l.innerHTML=chat.map(m=>`<div class="m ${state&&m.c===state.me?'me':''}"><b style="color:${HEX[m.c]||'#fff'}">${esc(m.name)}</b><span>${esc(m.text)}</span></div>`).join('')||'<div class="empty">No messages yet. Say hi 👋</div>';
-  l.scrollTop=l.scrollHeight}
+function updateChatHead(){
+  const s=document.getElementById('csub');if(!s||!state)return;
+  const n=COLORS.filter(c=>state.players[c]&&state.players[c].on).length;
+  s.textContent=n+(n===1?' player online':' players online')+' · Room '+state.code;
+}
+function toggleChat(o){
+  chatOpen=o;chatEl.classList.toggle('open',o);
+  if(o){unread=0;setBadge();renderChat();updateChatHead();syncKb()}else cin.blur();
+}
+function renderChat(){
+  const l=document.getElementById('cl');let h='',prev=null;
+  chat.forEach(m=>{
+    const me=state&&m.c===state.me,first=!prev||prev.c!==m.c||m.t-prev.t>120000;
+    const tm=new Date(m.t).toLocaleTimeString([],{hour:'numeric',minute:'2-digit'});
+    h+=`<div class="mr ${me?'me':''} ${first?'first':''}" style="--c:${HEX[m.c]||'#888'}">${me?'':`<div class="mav">${first?avFace(m.c,30):''}</div>`}<div class="mb">${first?`<div class="mh"><b>${esc(m.name)}</b><time>${tm}</time></div>`:''}<div class="mt">${esc(m.text)}</div></div></div>`;
+    prev=m;
+  });
+  l.innerHTML=h||'<div class="cempty"><div>💬</div><b>No messages yet</b><span>Say hi to your friends 👋</span></div>';
+  l.scrollTop=l.scrollHeight;
+}
 function sendChat(t){t=(t||'').trim();if(t)socket.emit('chat',t)}
+function submitChat(){sendChat(cin.value);cin.value='';csend.disabled=true;cin.focus()}
+cin.oninput=()=>{csend.disabled=!cin.value.trim()};
+cin.onkeydown=e=>{if(e.key==='Enter'&&!e.isComposing){e.preventDefault();submitChat()}};
+csend.onclick=submitChat;
 document.getElementById('cx').onclick=()=>toggleChat(false);
-document.getElementById('csend').onclick=()=>{const i=document.getElementById('cin');sendChat(i.value);i.value=''};
-document.getElementById('cin').onkeydown=e=>{if(e.key==='Enter'){sendChat(e.target.value);e.target.value=''}};
+document.getElementById('cbk').onclick=()=>toggleChat(false);
+document.addEventListener('keydown',e=>{if(e.key==='Escape'&&chatOpen)toggleChat(false)});
 chatEl.addEventListener('click',e=>{const b=e.target.closest('button');if(!b)return;if(b.dataset.e)socket.emit('react',b.dataset.e);if(b.dataset.p)sendChat(b.dataset.p)});
+/* keep the sheet above the on-screen keyboard */
+function syncKb(){
+  const v=window.visualViewport;if(!v)return;
+  chatEl.style.setProperty('--vvh',v.height+'px');
+  chatEl.style.setProperty('--kb',Math.max(0,window.innerHeight-v.height-v.offsetTop)+'px');
+  if(chatOpen){const l=document.getElementById('cl');l.scrollTop=l.scrollHeight}
+}
+if(window.visualViewport){visualViewport.addEventListener('resize',syncKb);visualViewport.addEventListener('scroll',syncKb)}
 function anchor(c){const el=document.getElementById('pc-'+c);return el?el.getBoundingClientRect():null}
 function bubble(c,text){const r=anchor(c);if(!r||chatOpen)return;const d=document.createElement('div');d.className='bub';d.style.setProperty('--c',HEX[c]);d.textContent=text.slice(0,48);
   document.body.appendChild(d);const w=d.offsetWidth;d.style.left=Math.max(6,Math.min(innerWidth-w-6,r.left+r.width/2-w/2))+'px';
