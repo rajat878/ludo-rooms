@@ -109,6 +109,17 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 .bm{flex:1;min-width:0;text-align:left;line-height:1.05;padding-left:4px}.bn{font-size:24px;font-weight:900;letter-spacing:.02em;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}.bb{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);margin-top:3px;white-space:nowrap;font-weight:700}
 .status{display:inline-block;padding:7px 18px;border-radius:999px;background:var(--ca,rgba(255,255,255,.1));border:1.5px solid var(--c,#555);box-shadow:0 0 20px -4px var(--c,transparent);font-size:15px;margin-bottom:2px}
 @media (prefers-reduced-motion:reduce){.pc.on{animation:none}}
+.fa{border-radius:50%;object-fit:cover;border:3px solid var(--c);box-sizing:border-box;flex:none;background:#222;box-shadow:0 3px 8px rgba(0,0,0,.45)}
+.pf{display:flex;align-items:center;gap:14px;margin-bottom:14px}
+.pfw{position:relative;flex:none;cursor:pointer}
+.pfa{width:78px;height:78px;border-radius:50%;border:3px dashed rgba(255,255,255,.45);display:grid;place-items:center;background:rgba(0,0,0,.35);overflow:hidden;font-size:30px;box-sizing:border-box}
+.pfa.set{border:3px solid #fff;box-shadow:0 0 0 3px #2f7de1,0 8px 20px rgba(0,0,0,.5)}.pfa img{width:100%;height:100%;object-fit:cover;display:block}
+.pfb{position:absolute;right:-2px;bottom:-2px;width:26px;height:26px;border-radius:50%;background:#2f7de1;border:2px solid #fff;display:grid;place-items:center;font-size:13px}
+.pfh{font-weight:800;font-size:15px}.pfh.need{color:#ffd166}.pfh.ok{color:#8be8a2}.pfs{color:var(--mut);font-size:12px;margin-top:2px}
+.hm{display:flex;flex-direction:column;justify-content:flex-start;overflow-y:auto}.hm>:first-child{margin-top:auto}.hm>:last-child{margin-bottom:auto}
+.pc{border-left:3px solid var(--c)!important}.pc .ds{width:54px;height:54px}.pc .dice{width:52px;height:52px;padding:7px}
+.pc.on .ds{width:58px;height:58px}.pc.on .dice{width:56px;height:56px;padding:7px;border-radius:15px}.pc .pn{font-size:13px}
+@media (max-height:700px){.tag{display:none}}
 </style></head>
 <body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
@@ -198,24 +209,59 @@ function buildBg(){
 }
 const fx=on=>document.body.classList.toggle('fx',!!on);
 
+/* ---------- profile photo ---------- */
+let myAvatar=ls.get('ludo.avatar')||'',avs={};
+const okAv=a=>typeof a==='string'&&a.length<=16000&&/^data:image\/jpeg;base64,[A-Za-z0-9+\/=]+$/.test(a);
+function avFace(c,sz){
+  const a=avs[c],st=`width:${sz}px;height:${sz}px;--c:${HEX[c]}`;
+  if(okAv(a))return `<img class="fa" alt="" src="${a}" style="${st}">`;
+  const n=((state&&state.players[c]&&state.players[c].name[0])||'?').toUpperCase();
+  return `<div class="av" style="${st};background:${HEX[c]};font-size:${Math.round(sz*.45)}px">${esc(n)}</div>`;
+}
+function pickPhoto(file){
+  if(!file)return;
+  const url=URL.createObjectURL(file),img=new Image();
+  img.onload=()=>{
+    const S=96,cv=document.createElement('canvas');cv.width=cv.height=S;const x=cv.getContext('2d');
+    const m=Math.min(img.width,img.height),sx=(img.width-m)/2,sy=(img.height-m)/2;
+    x.drawImage(img,sx,sy,m,m,0,0,S,S);URL.revokeObjectURL(url);
+    let q=.8,d=cv.toDataURL('image/jpeg',q);while(d.length>15000&&q>.3){q-=.1;d=cv.toDataURL('image/jpeg',q)}
+    if(!okAv(d))return toast('Could not use that photo, try another');
+    myAvatar=d;ls.set('ludo.avatar',d);paintProfile();
+  };
+  img.onerror=()=>{URL.revokeObjectURL(url);toast('Could not read that photo')};
+  img.src=url;
+}
+function paintProfile(){
+  const ok=okAv(myAvatar),a=document.getElementById('pfa');if(!a)return;
+  a.className='pfa'+(ok?' set':'');a.innerHTML=ok?`<img alt="" src="${myAvatar}">`:'📷';
+  const t=document.getElementById('pfh');t.className='pfh '+(ok?'ok':'need');t.textContent=ok?'Looking good! 😎':'Add your photo to play';
+  ['mk','jn'].forEach(id=>{const b=document.getElementById(id);if(b)b.disabled=!ok});
+}
+socket.on('avatars',a=>{avs=a||{};if(state)render()});
+
 /* ---------- home / join ---------- */
 function home(msg){
   state=null;lastCode='';
   fx(true);
   app.innerHTML=`<div class="hm">${hero(false)}<p class="tag">2 to 4 friends, each on their own phone.</p>
-  <div class="glass"><label>YOUR NAME</label>
+  <div class="glass"><div class="pf"><div class="pfw" id="pfw"><div class="pfa" id="pfa">📷</div><span class="pfb">✎</span></div><div><div class="pfh need" id="pfh"></div><div class="pfs">Your profile photo (required)</div></div></div>
+  <input type="file" id="pfile" accept="image/*" hidden>
+  <label>YOUR NAME</label>
   <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
   <button id="mk" class="pri">Create room</button>
   <div class="or">or join a friend’s room</div>
   <input id="cd" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
   <button id="jn">Join room</button>
   <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div></div>`;
+  document.getElementById('pfw').onclick=()=>document.getElementById('pfile').click();
+  document.getElementById('pfile').onchange=e=>{pickPhoto(e.target.files[0]);e.target.value=''};paintProfile();
   const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
-  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name()},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);ls.set('ludo.tok.'+r.code,r.token);wake()});
-  document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
+  document.getElementById('mk').onclick=()=>!okAv(myAvatar)?err('Add your profile photo first'):socket.emit('create',{name:name(),avatar:myAvatar},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);ls.set('ludo.tok.'+r.code,r.token);wake()});
+  document.getElementById('jn').onclick=()=>{if(!okAv(myAvatar))return err('Add your profile photo first');const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
 }
 function join(code,name,silent){
-  socket.emit('join',{code,name,token:ls.get('ludo.tok.'+code)||undefined},r=>{
+  socket.emit('join',{code,name,avatar:myAvatar,token:ls.get('ludo.tok.'+code)||undefined},r=>{
     if(r.error){if(silent){ls.del('ludo.room');home()}else err(r.error);return}
     ls.set('ludo.room',r.code);if(r.token)ls.set('ludo.tok.'+r.code,r.token);wake();
   });
@@ -353,8 +399,8 @@ function playerCard(S,c){
   const p=S.players[c];if(!p)return '<div></div>';
   const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!S.hold&&!animating(),held=on&&!!S.hold;
   const face=rl?1+Math.floor(Math.random()*6):hist[c];
-  const sub=on?(held?'':(canRoll?'Your turn · ':'')+'<span id="tm"></span>'):(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
-  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38"><div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
+  const sub=on?(held?'':'<span id="tm"></span>'):(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
+  return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]};--ca:${HEX[c]}38">${avFace(c,34)}<div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
   <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${held?'held':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
@@ -364,14 +410,14 @@ function render(){
     const n=COLORS.filter(c=>S.players[c]).length;
     fx(true);
     h+=`<div class="lob">${hero(true)}<div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
-    COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
+    COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}">${avFace(c,40)}<div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
     `</div>${S.isHost?rulesPanel(S):''}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
   }else{
     fx(false);const mine=S.status==='playing'&&S.turn===S.me;
     const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:S.hold==='none'?`😕 ${esc(nm(S,S.turn))} rolled ${S.last?S.last.d:''}: no move possible`:S.hold==='sixes'?'🚫 Three 6s in a row: turn lost':mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
     <div class="foot"><div class="status" style="--c:${HEX[S.status==='done'?S.winner:S.turn]};--ca:${HEX[S.status==='done'?S.winner:S.turn]}33">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
-    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
+    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="display:flex;justify-content:center">${avFace(S.winner,84)}</div><div style="font-size:40px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
   }
   app.innerHTML=h;
   const $=id=>document.getElementById(id);
