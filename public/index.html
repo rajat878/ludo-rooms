@@ -41,9 +41,6 @@ button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7d
 .dice.roll{animation:shake .14s linear infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-5px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-5px)}}
 .dice.idle{opacity:.6;transform:scale(.88)}
 .dice.my{box-shadow:0 0 0 3px var(--c,#fff),0 4px 0 rgba(0,0,0,.28),0 8px 18px rgba(0,0,0,.4)}
-.dice.rp{position:fixed;z-index:26;width:76px;height:76px;padding:11px;border-width:4px;pointer-events:none;animation:rpop 1.8s ease-out forwards}
-.dice .nb{position:absolute;top:-12px;right:-12px;min-width:28px;height:28px;border-radius:14px;color:#fff;font:800 17px/28px -apple-system,system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 2px 8px #0008}
-@keyframes rpop{0%{transform:scale(.2) rotate(-200deg);opacity:0}25%{transform:scale(1.2) rotate(8deg);opacity:1}45%{transform:scale(1) rotate(0)}85%{transform:scale(1);opacity:1}100%{transform:scale(.9) translateY(-16px);opacity:0}}
 .bobpin{animation:bobpin .7s ease-in-out infinite}@keyframes bobpin{50%{transform:translateY(-.12px)}}
 .pc .pi .ps{white-space:normal;line-height:1.15}
 h1 b,.brand{letter-spacing:.02em}
@@ -65,8 +62,47 @@ h1 b,.brand{letter-spacing:.02em}
 .ci{display:flex;gap:8px;padding:6px 14px 12px}.ci input{margin:0;flex:1}.ci button{width:80px}
 .bub{position:fixed;z-index:25;background:#fff;color:#111;padding:7px 12px;border-radius:14px;font-size:14px;font-weight:600;max-width:70vw;box-shadow:0 4px 14px #0008;border:3px solid var(--c);animation:pop .25s ease-out}@keyframes pop{from{transform:scale(.6);opacity:0}}
 .fl{position:fixed;z-index:25;font-size:38px;pointer-events:none;animation:up 2.1s ease-out forwards}@keyframes up{to{transform:translateY(-110px) scale(1.5);opacity:0}}
+
+/* ---------- premium home / lobby ---------- */
+#bg{position:fixed;inset:0;z-index:0;overflow:hidden;display:none;pointer-events:none;background:radial-gradient(90% 60% at 50% 0%,#2a2f6b 0%,#14141c 70%)}
+body.fx #bg{display:block}#app{position:relative;z-index:1}
+#bg .bl{position:absolute;width:62vmax;height:62vmax;border-radius:50%;filter:blur(70px);opacity:.34;animation:drift 18s ease-in-out infinite alternate}
+#bg .b1{background:#e5483f;left:-30vmax;top:-26vmax}#bg .b2{background:#2fa84f;right:-30vmax;top:-20vmax;animation-delay:-4s}
+#bg .b3{background:#2f7de1;left:-28vmax;bottom:-30vmax;animation-delay:-8s}#bg .b4{background:#f2b705;right:-30vmax;bottom:-28vmax;animation-delay:-12s;opacity:.26}
+@keyframes drift{to{transform:translate(7vmax,5vmax) scale(1.12)}}
+#bg .grid{position:absolute;inset:0;opacity:.07;background-image:linear-gradient(#fff 1px,transparent 1px),linear-gradient(90deg,#fff 1px,transparent 1px);background-size:44px 44px;-webkit-mask-image:radial-gradient(70% 60% at 50% 45%,#000,transparent);mask-image:radial-gradient(70% 60% at 50% 45%,#000,transparent)}
+#bg .fz{position:absolute;opacity:.2;animation:flt 11s ease-in-out infinite;filter:drop-shadow(0 8px 10px rgba(0,0,0,.45))}
+@keyframes flt{0%,100%{transform:translateY(0) rotate(var(--r))}50%{transform:translateY(-26px) rotate(calc(var(--r) + 14deg))}}
+.hm{display:flex;flex-direction:column;justify-content:center;gap:16px;height:100%;min-height:0}
+.hero{text-align:center;padding:4px 0}.hero.sm{padding:0 0 2px}
+.hpins{display:flex;justify-content:center;gap:8px;margin-bottom:6px}.hpins svg{width:34px;height:42px;animation:hop 2.4s ease-in-out infinite;filter:drop-shadow(0 6px 5px rgba(0,0,0,.45))}
+.hpins svg:nth-child(2){animation-delay:.2s}.hpins svg:nth-child(3){animation-delay:.4s}.hpins svg:nth-child(4){animation-delay:.6s}
+@keyframes hop{0%,60%,100%{transform:translateY(0)}30%{transform:translateY(-9px)}}
+.we{font-size:15px;font-weight:800;letter-spacing:.55em;margin-right:-.55em;color:#dfe2ff;text-shadow:0 2px 10px rgba(120,140,255,.6)}
+.logo{display:flex;justify-content:center;gap:4px;line-height:1;margin:2px 0 6px}
+.logo span{font-size:78px;font-weight:900;font-family:-apple-system,system-ui,"Arial Black",sans-serif;background:linear-gradient(180deg,var(--l) 10%,var(--c) 70%);-webkit-background-clip:text;background-clip:text;color:transparent;-webkit-text-fill-color:transparent;
+ filter:drop-shadow(0 4px 0 var(--d)) drop-shadow(0 12px 14px rgba(0,0,0,.55));animation:lb 3s ease-in-out infinite}
+.logo span:nth-child(2){animation-delay:.15s}.logo span:nth-child(3){animation-delay:.3s}.logo span:nth-child(4){animation-delay:.45s}
+@keyframes lb{0%,70%,100%{transform:translateY(0)}35%{transform:translateY(-6px)}}
+.hero.sm .logo span{font-size:48px}.hero.sm .hpins svg{width:26px;height:32px}.hero.sm .we{font-size:12px}
+.byl{display:flex;align-items:center;justify-content:center;gap:12px;color:#c9cbe0;font-size:12px;font-weight:700;letter-spacing:.34em}
+.byl i{height:1px;width:46px;background:linear-gradient(90deg,transparent,rgba(255,255,255,.65))}.byl i:last-child{transform:scaleX(-1)}
+.byl span{white-space:nowrap;margin-right:-.34em}
+.tag{color:var(--mut);text-align:center;margin:0;font-size:14px}
+.glass{background:rgba(255,255,255,.075);-webkit-backdrop-filter:blur(18px);backdrop-filter:blur(18px);border:1px solid rgba(255,255,255,.16);border-radius:22px;padding:18px;box-shadow:0 18px 50px rgba(0,0,0,.45),inset 0 1px 0 rgba(255,255,255,.18);margin:0}
+.glass label{font-size:12px;letter-spacing:.14em;color:var(--mut);font-weight:700}
+.glass input{background:rgba(10,10,18,.55);border-color:rgba(255,255,255,.14)}
+.glass button.pri{box-shadow:0 8px 22px -6px #2f7de1,inset 0 1px 0 rgba(255,255,255,.35)}
+.lob .bigcode{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.16);border-radius:20px;padding:6px 0 6px .2em;font-size:48px;box-shadow:0 10px 30px rgba(0,0,0,.35)}
+.lob .seat{-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px)}
+.lob{padding:14px 2px 6px;box-sizing:border-box}.lob>*{max-width:100%;box-sizing:border-box}
+.lob .bigcode{margin:0;padding:6px 0 6px .2em;text-align:center;width:100%}
+.lob .seats{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.lob .seat{min-width:0;width:100%;justify-self:stretch;box-sizing:border-box}
+.lob .rules{width:100%}
+@media (max-height:700px){.logo span{font-size:60px}.hm{gap:10px}}
+@media (prefers-reduced-motion:reduce){#bg .bl,#bg .fz,.logo span,.hpins svg{animation:none}}
 </style></head>
-<body><div id="app"></div><div id="chat"></div>
+<body><div id="bg"></div><div id="app"></div><div id="chat"></div>
 <script src="/socket.io/socket.io.js"></script>
 <script>
 const COLORS=['red','green','yellow','blue'];
@@ -132,17 +168,40 @@ socket.on('state',S=>{
   render();kick();maybeCelebrate();
 });
 
+
+/* ---------- premium background + hero ---------- */
+const LOGO=[['L','red','#ff9a90','#8f1f19'],['U','green','#8be8a2','#17692f'],['D','yellow','#ffe58a','#a67c00'],['O','blue','#9ccbff','#174f9c']];
+function miniPin(c,k){
+  return `<svg viewBox="-.42 -.82 .84 1.02"><defs><radialGradient id="hg${k}${c}" cx=".35" cy=".3" r=".85"><stop offset="0" stop-color="${LIGHT[c]}"/><stop offset="1" stop-color="${HEX[c]}"/></radialGradient><linearGradient id="hw${k}${c}" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="#cdd0d8"/></linearGradient></defs>
+  <ellipse cx="0" cy=".07" rx=".3" ry=".13" fill="${DARK[c]}"/><ellipse cx="0" cy="0" rx=".3" ry=".13" fill="${HEX[c]}" stroke="${DARK[c]}" stroke-width=".04"/>
+  <path d="${TEAR}" fill="url(#hw${k}${c})" stroke="#70707c" stroke-width=".035"/><circle cx="0" cy="-.5" r=".2" fill="url(#hg${k}${c})" stroke="${DARK[c]}" stroke-width=".03"/>
+  <ellipse cx="-.08" cy="-.58" rx=".06" ry=".035" fill="#fff" opacity=".85" transform="rotate(-25 -.08 -.58)"/></svg>`;
+}
+function hero(small){
+  return `<div class="hero ${small?'sm':''}"><div class="hpins">${COLORS.map((c,k)=>miniPin(c,small?'s':'b')).join('')}</div>
+  <div class="we">WE 4</div><div class="logo">${LOGO.map(([t,c,l,d])=>`<span style="--c:${HEX[c]};--l:${l};--d:${d}">${t}</span>`).join('')}</div>
+  <div class="byl"><i></i><span>BY RAJAT WALIA</span><i></i></div></div>`;
+}
+function buildBg(){
+  const pin=(c,x,y,r,sz,dl)=>`<div class="fz" style="left:${x}%;top:${y}%;width:${sz}px;--r:${r}deg;animation-delay:${dl}s">${miniPin(c,'f'+x)}</div>`;
+  const die=(x,y,r,sz,dl)=>`<div class="fz" style="left:${x}%;top:${y}%;width:${sz}px;--r:${r}deg;animation-delay:${dl}s"><svg viewBox="0 0 60 60"><rect x="3" y="3" width="54" height="54" rx="12" fill="#f4f1e8"/>${[[18,18],[42,18],[18,30],[42,30],[18,42],[42,42]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4.6" fill="#222"/>`).join('')}</svg></div>`;
+  document.getElementById('bg').innerHTML='<div class="bl b1"></div><div class="bl b2"></div><div class="bl b3"></div><div class="bl b4"></div><div class="grid"></div>'+
+   pin('red',8,16,-12,46,0)+pin('green',84,24,10,40,-3)+pin('yellow',14,70,8,42,-5)+pin('blue',80,74,-8,48,-7)+die(70,8,14,44,-2)+die(4,44,-18,36,-6)+die(88,52,20,34,-9);
+}
+const fx=on=>document.body.classList.toggle('fx',!!on);
+
 /* ---------- home / join ---------- */
 function home(msg){
   state=null;lastCode='';
-  app.innerHTML=`<h1>${BRAND}</h1><div class="by">BY RAJAT WALIA</div><p class="sub">2 to 4 friends, each on their own phone.</p>
-  <div class="card"><label>Your name</label>
+  fx(true);
+  app.innerHTML=`<div class="hm">${hero(false)}<p class="tag">2 to 4 friends, each on their own phone.</p>
+  <div class="glass"><label>YOUR NAME</label>
   <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
   <button id="mk" class="pri">Create room</button>
   <div class="or">or join a friend’s room</div>
   <input id="cd" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
   <button id="jn">Join room</button>
-  <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div><div class="credit">Designed &amp; developed by Rajat Walia</div>`;
+  <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div></div>`;
   const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
   document.getElementById('mk').onclick=()=>socket.emit('create',{name:name()},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);ls.set('ludo.tok.'+r.code,r.token);wake()});
   document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
@@ -181,18 +240,10 @@ function startShuffle(c,d){
   shuf=setInterval(()=>{
     const n=performance.now();
     if(n>=diceUntil&&(resD!=null||n-shufStart>3000)){
-      clearInterval(shuf);shuf=0;const f=resD!=null?resD:hist[shufC];hist[shufC]=f;rollPop(shufC,f);shufC=null;render();maybeCelebrate();return}
+      clearInterval(shuf);shuf=0;const f=resD!=null?resD:hist[shufC];hist[shufC]=f;shufC=null;render();maybeCelebrate();return}
     setFace(shufC,1+Math.floor(Math.random()*6));
   },75);
 }
-function rollPop(c,d){
-  const b=document.getElementById('bd');if(!b)return;const r=b.getBoundingClientRect(),[ox,oy]=ORG[c];
-  const el=document.createElement('div');el.className='dice rp';el.style.borderColor=HEX[c];
-  el.innerHTML=pips(d)+`<span class="nb" style="background:${HEX[c]}">${d}</span>`;
-  el.style.left=(r.left+(ox+3)/15*r.width-38)+'px';el.style.top=(r.top+(oy+3)/15*r.height-38)+'px';
-  document.body.appendChild(el);setTimeout(()=>el.remove(),1800);
-}
-
 /* ---------- token animation ---------- */
 function kick(){if(!raf)raf=requestAnimationFrame(frame)}
 function buildSteps(j,c,i){
@@ -303,11 +354,12 @@ function render(){
   let h=topbar(S);
   if(S.status==='lobby'){
     const n=COLORS.filter(c=>S.players[c]).length;
-    h+=`<div class="lob"><div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
+    fx(true);
+    h+=`<div class="lob">${hero(true)}<div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
     COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
-    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}<div class="credit">We 4 Ludo · by Rajat Walia</div></div>`;
+    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
   }else{
-    const mine=S.status==='playing'&&S.turn===S.me;
+    fx(false);const mine=S.status==='playing'&&S.turn===S.me;
     const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:S.hold==='none'?`😕 ${esc(nm(S,S.turn))} rolled ${S.last?S.last.d:''}: no move possible`:S.hold==='sixes'?'🚫 Three 6s in a row: turn lost':mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
     <div class="foot"><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
@@ -363,5 +415,5 @@ function maybeCelebrate(){
   for(let k=0;k<70;k++){const e=document.createElement('i');e.style.cssText=`left:${Math.random()*100}%;background:${HEX[COLORS[k%4]]};animation-delay:${Math.random()*1.2}s;animation-duration:${2+Math.random()*2}s`;w.appendChild(e)}
   document.body.appendChild(w);setTimeout(()=>w.remove(),5500);
 }
-home();
+buildBg();home();
 </script></body></html>
