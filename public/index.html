@@ -106,7 +106,7 @@ body.fx #bg{display:block}#app{position:relative;z-index:1}
 @keyframes pcg{50%{box-shadow:0 0 30px 0 var(--c)}}
 .pc .pn{font-size:14px}
 .bar .ib{width:34px;height:34px;font-size:15px}.btns{gap:5px}
-.bm{flex:1;min-width:0;text-align:center;line-height:1.1}.bn{font-size:15px;font-weight:900;letter-spacing:.02em}.bb{font-size:9px;letter-spacing:.22em;text-transform:uppercase;color:var(--mut);margin-top:2px;white-space:nowrap}
+.bm{flex:1;min-width:0;text-align:left;line-height:1.05;padding-left:4px}.bn{font-size:24px;font-weight:900;letter-spacing:.02em;filter:drop-shadow(0 2px 0 rgba(0,0,0,.45))}.bb{font-size:10px;letter-spacing:.3em;text-transform:uppercase;color:var(--mut);margin-top:3px;white-space:nowrap;font-weight:700}
 .status{display:inline-block;padding:7px 18px;border-radius:999px;background:var(--ca,rgba(255,255,255,.1));border:1.5px solid var(--c,#555);box-shadow:0 0 20px -4px var(--c,transparent);font-size:15px;margin-bottom:2px}
 @media (prefers-reduced-motion:reduce){.pc.on{animation:none}}
 </style></head>
@@ -346,7 +346,7 @@ function rulesPanel(S){
    `<label class="rr"><span>${l}</span><select data-k="${k}" ${S.isHost?'':'disabled'}>${o.map(([v,t])=>`<option value='${JSON.stringify(v)}' ${JSON.stringify(S.rules[k])===JSON.stringify(v)?'selected':''}>${t}</option>`).join('')}</select></label>`).join('')+'</div>';
 }
 function topbar(S){
-  return `<div class="bar"><div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div>${S.status==='lobby'?'':`<div class="bm"><div class="bn">${BRAND}</div><div class="bb">by Rajat Walia</div></div>`}<div class="btns">
+  return `<div class="bar">${S.status==='lobby'?`<div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div>`:`<div class="bm"><div class="bn">${BRAND}</div><div class="bb">by Rajat Walia</div></div>`}<div class="btns">
   <button id="cbtn" class="ib">💬<span class="bd" id="cb" ${unread?'':'hidden'}>${unread}</span></button><button id="iv" class="ib">📨</button><button id="mt" class="ib">${mute?'🔇':'🔊'}</button><button id="lv" class="ib">✕</button></div></div>`;
 }
 function playerCard(S,c){
