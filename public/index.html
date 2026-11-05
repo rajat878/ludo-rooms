@@ -38,7 +38,8 @@ button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7d
 .dice.my{cursor:pointer;animation:bob 1s ease-in-out infinite}@keyframes bob{50%{transform:translateY(-4px) scale(1.1)}}
 .dice.roll{animation:shake .14s linear infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-5px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-5px)}}
 .mv{animation:pulse .9s infinite}@keyframes pulse{50%{opacity:.25}}.tk{cursor:pointer}
-.lob{margin:auto 0;text-align:center;display:flex;flex-direction:column;gap:10px}.bigcode{font-size:56px;font-weight:900;letter-spacing:.2em;margin-right:-.2em}
+.rules{display:grid;gap:6px;text-align:left}.rr{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.06);padding:7px 12px;border-radius:12px;font-size:14px}.rr select{font:inherit;font-size:14px;background:#16161d;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px}
+#app{overflow:hidden}.lob{min-height:0;overflow-y:auto;margin:auto 0;text-align:center;display:flex;flex-direction:column;gap:10px}.bigcode{font-size:56px;font-weight:900;letter-spacing:.2em;margin-right:-.2em}
 .seats{display:grid;grid-template-columns:1fr 1fr;gap:8px}.seat{display:flex;align-items:center;gap:8px;padding:12px;border-radius:16px;background:rgba(255,255,255,.07);border:2px solid var(--c)}.seat.empty{border:2px dashed var(--line);opacity:.7}
 .ov{position:fixed;inset:0;display:grid;place-items:center;background:rgba(0,0,0,.6);z-index:15}.ovc{background:#23232d;border-radius:22px;padding:22px;text-align:center;width:min(86vw,340px);display:flex;flex-direction:column;gap:10px}.ovc h2{margin:0}
 .conf{position:fixed;inset:0;pointer-events:none;overflow:hidden;z-index:30}.conf i{position:absolute;top:-16px;width:9px;height:14px;animation:fall linear forwards}@keyframes fall{to{transform:translateY(110vh) rotate(720deg)}}
@@ -88,7 +89,6 @@ turn(){tone(780,.08,'sine',.1);tone(1040,.1,'sine',.1,.09)},win(){[523,659,784,1
 document.addEventListener('pointerdown',unlock);
 
 /* ---------- connection ---------- */
-let pid=ls.get('ludo.pid');if(!pid){pid=Math.random().toString(36).slice(2)+Date.now().toString(36);ls.set('ludo.pid',pid)}
 const socket=io();
 let state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
 let shown=null,tgt=null,jobs=[],cur=null,diceUntil=0,rollStart=0,raf=0,shuf=0;
@@ -96,6 +96,7 @@ const rolling=()=>performance.now()<diceUntil;
 const animating=()=>rolling()||!!cur||jobs.length>0;
 
 socket.on('connect',()=>{online=true;const r=ls.get('ludo.room');if(r)join(r,ls.get('ludo.name')||'Player',true);else if(!state)home()});
+socket.on('kicked',m=>{ls.del('ludo.room');state=null;home(m)});
 socket.on('disconnect',()=>{online=false;toast('Connection lost, reconnecting…')});
 socket.on('state',S=>{
   const first=!state||S.code!==lastCode;
@@ -124,13 +125,13 @@ function home(msg){
   <button id="jn">Join room</button>
   <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div>`;
   const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
-  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name(),pid},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);wake()});
+  document.getElementById('mk').onclick=()=>socket.emit('create',{name:name()},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);ls.set('ludo.tok.'+r.code,r.token);wake()});
   document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
 }
 function join(code,name,silent){
-  socket.emit('join',{code,name,pid},r=>{
+  socket.emit('join',{code,name,token:ls.get('ludo.tok.'+code)||undefined},r=>{
     if(r.error){if(silent){ls.del('ludo.room');home()}else err(r.error);return}
-    ls.set('ludo.room',r.code);wake();
+    ls.set('ludo.room',r.code);if(r.token)ls.set('ludo.tok.'+r.code,r.token);wake();
   });
 }
 function wake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').catch(()=>{})}catch(e){}}
@@ -219,6 +220,21 @@ function boardSVG(S){
   s+=`<polygon points="6,6 6,9 7.5,7.5" fill="${HEX.red}"/><polygon points="6,6 9,6 7.5,7.5" fill="${HEX.green}"/><polygon points="9,6 9,9 7.5,7.5" fill="${HEX.yellow}"/><polygon points="6,9 9,9 7.5,7.5" fill="${HEX.blue}"/><g id="tl"></g></svg>`;
   return s;
 }
+const RULESPEC=[
+ ['maxConsecutiveSixes','Sixes in a row',[[3,'3rd loses turn'],[2,'2nd loses turn'],[0,'No limit']]],
+ ['extraTurnOnCapture','Capture gives extra turn',[[true,'Yes'],[false,'No']]],
+ ['extraTurnOnHome','Reaching home gives extra turn',[[true,'Yes'],[false,'No']]],
+ ['safeSquares','Safe squares (★)',[[true,'On'],[false,'Off']]],
+ ['stackProtect','Stacked tokens are safe',[[true,'Yes'],[false,'No']]],
+ ['exitOn','Leave yard with',[['six','6 only'],['one_or_six','1 or 6']]],
+ ['turnSeconds','Turn timer',[[15,'15 s'],[25,'25 s'],[40,'40 s']]],
+ ['onTimeout','When time runs out',[['auto','Auto-play'],['skip','Skip turn']]],
+ ['pitySixAfter','Lucky six after misses',[[0,'Off'],[8,'8'],[12,'12']]]
+];
+function rulesPanel(S){
+  return '<div class="rules"><div class="sub" style="margin:0">Rules'+(S.isHost?'':' (host decides)')+'</div>'+RULESPEC.map(([k,l,o])=>
+   `<label class="rr"><span>${l}</span><select data-k="${k}" ${S.isHost?'':'disabled'}>${o.map(([v,t])=>`<option value='${JSON.stringify(v)}' ${JSON.stringify(S.rules[k])===JSON.stringify(v)?'selected':''}>${t}</option>`).join('')}</select></label>`).join('')+'</div>';
+}
 function topbar(S){
   return `<div class="bar"><div class="rt"><small>ROOM</small><b>${esc(S.code)}</b></div><div class="btns">
   <button id="cbtn" class="ib">💬<span class="bd" id="cb" ${unread?'':'hidden'}>${unread}</span></button><button id="iv" class="ib">📨</button><button id="mt" class="ib">${mute?'🔇':'🔊'}</button><button id="lv" class="ib">✕</button></div></div>`;
@@ -230,7 +246,7 @@ function playerCard(S,c){
   if(on){const face=rl?1+Math.floor(Math.random()*6):(S.last&&S.last.c===c?S.last.d:0);
     dice=`<div id="dice" class="dice ${rl?'roll':''} ${canRoll?'my':''}" style="border-color:${HEX[c]}">${face||!canRoll?pips(face):'<b>TAP</b>'}</div>`}
   return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div>
-  <div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${on?'<span id="tm"></span>':(c===me?'You':(p.on?'':'offline'))}</div></div><div class="ds">${dice}</div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
+  <div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${on?'<span id="tm"></span>':(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'))}</div></div><div class="ds">${dice}</div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
   const S=state;if(!S)return;
@@ -239,19 +255,19 @@ function render(){
     const n=COLORS.filter(c=>S.players[c]).length;
     h+=`<div class="lob"><div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
     COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
-    `</div><button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
+    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
   }else{
     const mine=S.status==='playing'&&S.turn===S.me;
     const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:mine?(S.dice==null?'Your turn: tap your dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
     <div class="foot"><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
-    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2>${S.isHost?'<button id="st" class="pri">Play again</button>':'<p class="sub">Waiting for the host to restart…</p>'}<button id="lv2">Leave room</button></div></div>`;
+    if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
   }
   app.innerHTML=h;
   const $=id=>document.getElementById(id);
   $('iv').onclick=invite;$('lv').onclick=leave;$('cbtn').onclick=()=>toggleChat(!chatOpen);
   $('mt').onclick=()=>{mute=!mute;ls.set('ludo.mute',mute?'1':'0');unlock();$('mt').textContent=mute?'🔇':'🔊'};
-  ['st'].forEach(k=>{if($(k))$(k).onclick=start});if($('inv2'))$('inv2').onclick=invite;if($('lv2'))$('lv2').onclick=leave;
+  ['st'].forEach(k=>{if($(k))$(k).onclick=start});if($('inv2'))$('inv2').onclick=invite;app.querySelectorAll('select[data-k]').forEach(el=>el.onchange=()=>socket.emit('rules',{[el.dataset.k]:JSON.parse(el.value)}));if($('lv2'))$('lv2').onclick=leave;if($('rm'))$('rm').onclick=()=>socket.emit('rematch');
   if($('dice'))$('dice').onclick=rollTap;
   if($('bd'))$('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
   drawTokens();updateTimer();
