@@ -19,7 +19,7 @@ const io = new Server(server, { maxHttpBufferSize: 3e4, pingInterval: 10000, pin
 
 const rooms = new Map();
 const MAX_ROOMS = 300;
-const HOLD_MS = +process.env.HOLD_MS || 2400;            // how long a no-move roll stays on screen
+const HOLD_MS = +process.env.HOLD_MS || 1400;            // how long a no-move roll stays on screen
 const REACTIONS = ['😂', '👏', '😡', '🔥', '❤️', '😭'];
 
 const sha = t => crypto.createHash('sha256').update(t).digest();
@@ -43,7 +43,7 @@ function view(R, color) {
   COLORS.forEach(c => { const p = R.players[c]; if (p) players[c] = { name: p.name, on: p.on, auto: !!(p.auto || p.left) }; });
   return {
     code: R.code, status: R.status, players, order: R.order, turn: R.turn, dice: R.dice, movable: R.movable,
-    last: R.last, log: R.log, winner: R.winner, tokens: R.tokens, rules: R.rules, hold: R.hold || null,
+    last: R.last, log: R.log, winner: R.winner, finished: R.finished || [], tokens: R.tokens, rules: R.rules, hold: R.hold || null,
     rematch: R.votes ? [...R.votes] : [], seq: R.seq || 0, rollSeq: R.rollSeq || 0,
     left: R.status === 'playing' ? Math.max(0, Math.ceil((R.deadline - Date.now()) / 1000)) : 0,
     tot: Math.round((R.turnMs || 25000) / 1000), me: color, isHost: color === R.host
@@ -56,7 +56,7 @@ function broadcast(R) {
 function arm(R) {
   const p = R.players[R.turn]; let s;
   if (R.hold) s = HOLD_MS / 1000;
-  else if (!p || p.left || p.auto) s = 1;
+  else if (!p || p.left || p.auto) s = 0.8;
   else if (!p.on) s = Math.max(1, R.rules.offlineGraceSeconds);
   else s = R.dice != null ? R.rules.pickSeconds : R.rules.turnSeconds;
   R.turnMs = s * 1000; R.deadline = Date.now() + R.turnMs; R.seq = (R.seq || 0) + 1; R.touched = Date.now();
@@ -136,7 +136,7 @@ io.on('connection', socket => {
     if (rooms.size >= MAX_ROOMS) return cb({ error: 'Server is busy, try again later' });
     let code; do { code = mkCode(); } while (rooms.has(code));
     const R = { code, host: 'red', status: 'lobby', players: {}, order: [], turn: 'red', dice: null, movable: [], last: null,
-      log: 'Room created', winner: null, tokens: E.fresh(), rules: { ...E.DEFAULT_RULES }, sixes: 0, miss: {}, rollSeq: 0, seq: 0, hold: null, pending: null, touched: Date.now(), chat: [] };
+      log: 'Room created', winner: null, finished: [], tokens: E.fresh(), rules: { ...E.DEFAULT_RULES }, sixes: 0, miss: {}, rollSeq: 0, seq: 0, hold: null, pending: null, touched: Date.now(), chat: [] };
     rooms.set(code, R);
     const { color, token } = seat(R, msg.name, msg.avatar); attach(socket, R, color); cb({ code, token });
   });
@@ -217,6 +217,6 @@ const start = port => new Promise(r => server.listen(port, () => r(server.addres
 
 if (require.main === module) {
   start(process.env.PORT || 3000).then(p => console.log('Ludo running on port ' + p));
-  setInterval(() => tick(), 500); setInterval(cleanup, 600e3);
+  setInterval(() => tick(), 200); setInterval(cleanup, 600e3);
 }
 module.exports = { server, io, rooms, tick, start, E };
