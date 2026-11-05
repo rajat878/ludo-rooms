@@ -1,4 +1,3 @@
-
 'use strict';
 /* Ludo rules engine: pure functions over a room object R.
    R needs: rules, order, players{color:{name}}, tokens, turn, dice, movable, last, sixes, miss, status, winner, log */
@@ -9,20 +8,20 @@ const START = { red: 0, green: 13, yellow: 26, blue: 39 };
 const SAFE = new Set([0, 8, 13, 21, 26, 34, 39, 47]);
 
 const DEFAULT_RULES = {
-  exitOn: 'six',               // 'six' | 'one_or_six': dice values that bring a token out of the yard
+  exitOn: 'six',
   extraTurnOnSix: true,
-  maxConsecutiveSixes: 3,      // 0 = unlimited. The Nth six in a row forfeits the move and the turn
+  maxConsecutiveSixes: 3,
   extraTurnOnCapture: true,
   extraTurnOnHome: true,
-  safeSquares: true,           // star squares and start squares cannot be captured on
-  stackProtect: true,          // 2+ tokens of one colour on a square cannot be captured
-  exactHome: true,             // false = an overshooting roll still finishes the token
-  pitySixAfter: 0,             // 0 = off. After N failed rolls with all tokens home, the next roll is a 6
-  turnSeconds: 25,             // time to roll
-  pickSeconds: 12,             // time to choose a token
-  onTimeout: 'auto',           // 'auto' = server plays for the player, 'skip' = turn is passed
-  autopilotAfterMisses: 2,     // consecutive timeouts before a player is put on autopilot (0 = never)
-  offlineGraceSeconds: 8       // how long a disconnected player is waited for
+  safeSquares: true,
+  stackProtect: true,
+  exactHome: true,
+  pitySixAfter: 0,
+  turnSeconds: 25,
+  pickSeconds: 12,
+  onTimeout: 'auto',
+  autopilotAfterMisses: 2,
+  offlineGraceSeconds: 8
 };
 const SPEC = {
   exitOn: { t: 'enum', v: ['six', 'one_or_six'] },
@@ -33,7 +32,6 @@ const SPEC = {
   onTimeout: { t: 'enum', v: ['auto', 'skip'] },
   autopilotAfterMisses: { t: 'int', min: 0, max: 6 }, offlineGraceSeconds: { t: 'int', min: 0, max: 60 }
 };
-/* Only known keys with valid types/ranges get through; everything else is ignored. */
 function sanitizeRules(input, base = DEFAULT_RULES) {
   const out = { ...base };
   if (!input || typeof input !== 'object' || Array.isArray(input)) return out;
@@ -55,7 +53,7 @@ const canExit = (rules, d) => d === 6 || (rules.exitOn === 'one_or_six' && d ===
 
 function startGame(R, first) {
   Object.assign(R, { status: 'playing', turn: first, tokens: fresh(), dice: null, movable: [], last: null,
-    winner: null, sixes: 0, miss: {}, log: 'Game started' });
+    winner: null, sixes: 0, miss: {}, hold: null, pending: null, log: 'Game started' });
 }
 
 function movable(R, c, d) {
@@ -67,7 +65,6 @@ function movable(R, c, d) {
   return r;
 }
 
-/* Opponent tokens that would be captured by c landing on progress p. */
 function victims(R, c, p) {
   if (p > 50) return [];
   const a = abs(c, p);
@@ -98,7 +95,14 @@ function applyMove(R, c, i, d) {
   return { captured: hit, home: p === 56 };
 }
 
-/* Rolls for player c and applies everything that follows. Returns what happened. */
+/* A roll with no possible move does NOT pass the turn at once: the roller keeps the turn
+   while R.hold is set, so every phone can read the number. The server calls endHold() after HOLD_MS. */
+function endHold(R) {
+  if (!R.hold) return false;
+  if (R.pending) R.turn = R.pending;
+  R.hold = null; R.pending = null; return true;
+}
+
 function rollDie(R, c, rand = () => crypto.randomInt(1, 7)) {
   const rules = R.rules, allHome = R.tokens[c].every(p => p < 0);
   let d = rand(), pity = false;
@@ -109,16 +113,15 @@ function rollDie(R, c, rand = () => crypto.randomInt(1, 7)) {
   R.dice = null; R.movable = [];
   if (rules.maxConsecutiveSixes && R.sixes >= rules.maxConsecutiveSixes) {
     R.log = `${nm(R, c)} rolled ${R.sixes} sixes in a row: turn lost`;
-    R.sixes = 0; R.turn = nextTurn(R, c); return { event: 'sixes', d };
+    R.sixes = 0; R.hold = 'sixes'; R.pending = nextTurn(R, c); return { event: 'sixes', d };
   }
   const mv = movable(R, c, d);
-  if (!mv.length) { R.log = `${nm(R, c)} rolled ${d}, no move`; R.sixes = 0; R.turn = nextTurn(R, c); return { event: 'none', d }; }
+  if (!mv.length) { R.log = `${nm(R, c)} rolled ${d}, no move`; R.sixes = 0; R.hold = 'none'; R.pending = nextTurn(R, c); return { event: 'none', d }; }
   if (mv.length === 1) { const r = applyMove(R, c, mv[0], d); if (pity) R.log += ' (lucky six!)'; return { event: 'auto', d, ...r }; }
   R.dice = d; R.movable = mv; R.log = `${nm(R, c)} rolled ${d}` + (pity ? ' (lucky six!)' : '');
   return { event: 'pick', d };
 }
 
-/* Simple heuristic used for timeouts and autopilot. */
 function chooseMove(R, c, d, mv) {
   let best = mv[0], bs = -1;
   for (const i of mv) {
@@ -133,4 +136,4 @@ function chooseMove(R, c, d, mv) {
   return best;
 }
 
-module.exports = { COLORS, START, SAFE, DEFAULT_RULES, sanitizeRules, abs, fresh, nextTurn, startGame, movable, victims, applyMove, rollDie, chooseMove };
+module.exports = { COLORS, START, SAFE, DEFAULT_RULES, sanitizeRules, abs, fresh, nextTurn, startGame, movable, victims, applyMove, rollDie, endHold, chooseMove };
