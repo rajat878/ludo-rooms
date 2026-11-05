@@ -5,6 +5,7 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#14141c">
 <title>We 4 Ludo</title>
 <meta name="apple-mobile-web-app-title" content="We 4 Ludo">
+<meta name="author" content="Rajat Walia"><meta name="description" content="We 4 Ludo: multiplayer Ludo for 2 to 4 friends. By Rajat Walia.">
 <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎲</text></svg>">
 <style>
 :root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);color-scheme:dark;
@@ -40,12 +41,16 @@ button.pri{background:linear-gradient(180deg,#4b95f5,#2f7de1);border-color:#2f7d
 .dice.roll{animation:shake .14s linear infinite}@keyframes shake{0%{transform:rotate(-14deg) translateY(-5px)}50%{transform:rotate(14deg) translateY(2px)}100%{transform:rotate(-14deg) translateY(-5px)}}
 .dice.idle{opacity:.6;transform:scale(.88)}
 .dice.my{box-shadow:0 0 0 3px var(--c,#fff),0 4px 0 rgba(0,0,0,.28),0 8px 18px rgba(0,0,0,.4)}
-.dice.rp{position:fixed;z-index:26;width:76px;height:76px;padding:11px;border-width:4px;pointer-events:none;animation:rpop 1.3s ease-out forwards}
+.dice.rp{position:fixed;z-index:26;width:76px;height:76px;padding:11px;border-width:4px;pointer-events:none;animation:rpop 1.8s ease-out forwards}
 .dice .nb{position:absolute;top:-12px;right:-12px;min-width:28px;height:28px;border-radius:14px;color:#fff;font:800 17px/28px -apple-system,system-ui,sans-serif;text-align:center;border:2px solid #fff;box-shadow:0 2px 8px #0008}
 @keyframes rpop{0%{transform:scale(.2) rotate(-200deg);opacity:0}25%{transform:scale(1.2) rotate(8deg);opacity:1}45%{transform:scale(1) rotate(0)}85%{transform:scale(1);opacity:1}100%{transform:scale(.9) translateY(-16px);opacity:0}}
 .bobpin{animation:bobpin .7s ease-in-out infinite}@keyframes bobpin{50%{transform:translateY(-.12px)}}
 .pc .pi .ps{white-space:normal;line-height:1.15}
 h1 b,.brand{letter-spacing:.02em}
+.pc.on .ds{width:70px;height:70px}.pc.on .dice{width:68px;height:68px;border-radius:17px;padding:9px}
+.dice.held{animation:none!important;box-shadow:0 0 0 4px #ff7a70,0 4px 0 rgba(0,0,0,.28),0 8px 18px rgba(0,0,0,.4)}
+.by{letter-spacing:.32em;font-size:11px;font-weight:700;color:var(--mut);margin:0 0 14px 2px}
+.credit{text-align:center;color:var(--mut);font-size:12px;letter-spacing:.08em;margin:12px 0 4px}
 .mv{animation:pulse .9s infinite}@keyframes pulse{50%{opacity:.25}}.tk{cursor:pointer}
 .rules{display:grid;gap:6px;text-align:left}.rr{display:flex;justify-content:space-between;align-items:center;gap:8px;background:rgba(255,255,255,.06);padding:7px 12px;border-radius:12px;font-size:14px}.rr select{font:inherit;font-size:14px;background:#16161d;color:var(--fg);border:1px solid var(--line);border-radius:8px;padding:5px}
 #app{overflow:hidden}.lob{min-height:0;overflow-y:auto;margin:auto 0;text-align:center;display:flex;flex-direction:column;gap:10px}.bigcode{font-size:56px;font-weight:900;letter-spacing:.2em;margin-right:-.2em}
@@ -95,12 +100,13 @@ function unlock(){try{if(!AC){const C=window.AudioContext||window.webkitAudioCon
 function tone(f,d,type,v,w){if(mute||!AC)return;try{const o=AC.createOscillator(),g=AC.createGain(),t=AC.currentTime+(w||0);o.type=type||'sine';o.frequency.setValueAtTime(f,t);g.gain.setValueAtTime(v||.12,t);g.gain.exponentialRampToValueAtTime(.001,t+d);o.connect(g);g.connect(AC.destination);o.start(t);o.stop(t+d)}catch(e){}}
 const sfx={roll(){for(let k=0;k<6;k++)tone(200+Math.random()*300,.05,'square',.05,k*.11)},hop(){tone(540,.07,'triangle',.14)},
 cap(){tone(330,.12,'sawtooth',.09);tone(160,.25,'sawtooth',.09,.1)},home(){tone(660,.1,'sine',.15);tone(880,.2,'sine',.15,.1)},
+nomove(){tone(240,.2,'sawtooth',.07);tone(180,.25,'sawtooth',.07,.15)},
 turn(){tone(780,.08,'sine',.1);tone(1040,.1,'sine',.1,.09)},win(){[523,659,784,1047].forEach((f,k)=>tone(f,.28,'triangle',.15,k*.14))}};
 document.addEventListener('pointerdown',unlock);
 
 /* ---------- connection ---------- */
 const socket=io();
-let state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
+let lastHold=null,state=null,online=false,recv=0,lastCode='',lastStatus='',lastTurn='',lastRoll=0,celebrated=false;
 let shown=null,tgt=null,jobs=[],cur=null,diceUntil=0,rollStart=0,raf=0,shuf=0,shufC=null,resD=null,shufStart=0;
 const hist={red:1,green:1,yellow:1,blue:1};
 const rolling=()=>!!shuf||performance.now()<diceUntil;
@@ -119,6 +125,7 @@ socket.on('state',S=>{
     S.order.forEach(c=>S.tokens[c].forEach((p,i)=>{if(tgt[c][i]!==p){jobs.push({c,i,from:tgt[c][i],to:p});tgt[c][i]=p}}));
     jobs.sort((a,b)=>(b.to>=0)-(a.to>=0));
   }
+  if(S.hold&&S.hold!==lastHold&&!snap)setTimeout(sfx.nomove,800);lastHold=S.hold;
   if(S.last)hist[S.last.c]=S.last.d;
   if(S.status==='playing'&&S.turn===S.me&&lastTurn!==S.turn&&!snap)setTimeout(sfx.turn,700);
   lastTurn=S.turn;lastStatus=S.status;lastCode=S.code;
@@ -128,14 +135,14 @@ socket.on('state',S=>{
 /* ---------- home / join ---------- */
 function home(msg){
   state=null;lastCode='';
-  app.innerHTML=`<h1>${BRAND}</h1><p class="sub">2 to 4 friends, each on their own phone.</p>
+  app.innerHTML=`<h1>${BRAND}</h1><div class="by">BY RAJAT WALIA</div><p class="sub">2 to 4 friends, each on their own phone.</p>
   <div class="card"><label>Your name</label>
   <input id="nm" maxlength="12" placeholder="e.g. Aman" value="${esc(ls.get('ludo.name')||'')}">
   <button id="mk" class="pri">Create room</button>
   <div class="or">or join a friend’s room</div>
   <input id="cd" maxlength="4" placeholder="CODE" autocapitalize="characters" autocomplete="off">
   <button id="jn">Join room</button>
-  <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div>`;
+  <p class="msg" id="msg">${esc(msg||(online?'':'Connecting…'))}</p></div><div class="credit">Designed &amp; developed by Rajat Walia</div>`;
   const name=()=>{const n=document.getElementById('nm').value.trim()||'Player';ls.set('ludo.name',n);return n};
   document.getElementById('mk').onclick=()=>socket.emit('create',{name:name()},r=>{if(r.error)return err(r.error);ls.set('ludo.room',r.code);ls.set('ludo.tok.'+r.code,r.token);wake()});
   document.getElementById('jn').onclick=()=>{const c=document.getElementById('cd').value.trim().toUpperCase();if(c.length!==4)return err('Enter the 4-letter code');join(c,name(),false)};
@@ -150,7 +157,7 @@ function wake(){try{navigator.wakeLock&&navigator.wakeLock.request('screen').cat
 document.addEventListener('visibilitychange',()=>{if(!document.hidden&&state)wake()});
 
 /* ---------- actions ---------- */
-function canRollNow(){const S=state;return !!S&&S.status==='playing'&&S.turn===S.me&&S.dice==null&&!animating()}
+function canRollNow(){const S=state;return !!S&&S.status==='playing'&&S.turn===S.me&&S.dice==null&&!S.hold&&!animating()}
 function rollTap(){
   if(!canRollNow())return;
   rollStart=performance.now();diceUntil=rollStart+750;sfx.roll();startShuffle(state.me,null);kick();socket.emit('roll');
@@ -183,7 +190,7 @@ function rollPop(c,d){
   const el=document.createElement('div');el.className='dice rp';el.style.borderColor=HEX[c];
   el.innerHTML=pips(d)+`<span class="nb" style="background:${HEX[c]}">${d}</span>`;
   el.style.left=(r.left+(ox+3)/15*r.width-38)+'px';el.style.top=(r.top+(oy+3)/15*r.height-38)+'px';
-  document.body.appendChild(el);setTimeout(()=>el.remove(),1350);
+  document.body.appendChild(el);setTimeout(()=>el.remove(),1800);
 }
 
 /* ---------- token animation ---------- */
@@ -285,11 +292,11 @@ function topbar(S){
 }
 function playerCard(S,c){
   const p=S.players[c];if(!p)return '<div></div>';
-  const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!animating();
+  const on=S.status==='playing'&&S.turn===c,me=S.me,rl=shufC===c,canRoll=on&&c===me&&S.dice==null&&!S.hold&&!animating(),held=on&&!!S.hold;
   const face=rl?1+Math.floor(Math.random()*6):hist[c];
-  const sub=on?(canRoll?'Tap the dice! ':'')+'<span id="tm"></span>':(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
+  const sub=on?(held?'':(canRoll?'Your turn · ':'')+'<span id="tm"></span>'):(p.auto?'autopilot':c===me?'You':(p.on?'':'offline'));
   return `<div class="pc ${on?'on':''}" id="pc-${c}" style="--c:${HEX[c]}"><div class="pi"><div class="pn">${esc(p.name)}</div><div class="ps">${sub}</div></div>
-  <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
+  <div class="ds"><div id="dice-${c}" class="dice ${rl?'roll':''} ${canRoll?'my':''} ${held?'held':''} ${on?'':'idle'}" style="border-color:${HEX[c]}">${pips(face)}</div></div>${on?'<div class="tb"><i id="tb"></i></div>':''}</div>`;
 }
 function render(){
   const S=state;if(!S)return;
@@ -298,10 +305,10 @@ function render(){
     const n=COLORS.filter(c=>S.players[c]).length;
     h+=`<div class="lob"><div class="sub" style="margin:0">Share this code with friends</div><div class="bigcode">${esc(S.code)}</div><div class="seats">`+
     COLORS.map(c=>{const p=S.players[c];return p?`<div class="seat" style="--c:${HEX[c]}"><div class="av" style="background:${HEX[c]}">${esc((p.name[0]||'?').toUpperCase())}</div><div class="pn">${esc(p.name)}${c===S.me?' (you)':''}</div></div>`:`<div class="seat empty"><div class="av" style="background:transparent;border:2px dashed ${HEX[c]}"></div><div class="pn">Waiting…</div></div>`}).join('')+
-    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}</div>`;
+    `</div>${rulesPanel(S)}<button id="inv2">📨 Invite friends</button>${S.isHost?`<button id="st" class="pri" ${n<2?'disabled':''}>${n<2?'Need at least 2 players':'Start game'}</button>`:'<p class="sub">Waiting for the host to start…</p>'}<div class="credit">We 4 Ludo · by Rajat Walia</div></div>`;
   }else{
     const mine=S.status==='playing'&&S.turn===S.me;
-    const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:mine?(S.dice==null?'Your turn: tap your dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
+    const line=S.status==='done'?`🏆 ${esc(nm(S,S.winner))} wins!`:S.hold==='none'?`😕 ${esc(nm(S,S.turn))} rolled ${S.last?S.last.d:''}: no move possible`:S.hold==='sixes'?'🚫 Three 6s in a row: turn lost':mine?(S.dice==null?'Your turn: roll the dice':'Tap a glowing token'):`${esc(nm(S,S.turn))}’s turn`;
     h+=`<div class="row">${playerCard(S,'red')}${playerCard(S,'green')}</div><div class="bwrap">${boardSVG(S)}</div><div class="row">${playerCard(S,'blue')}${playerCard(S,'yellow')}</div>
     <div class="foot"><div class="status">${line}</div><div class="log">${esc(S.log||'')}</div></div>`;
     if(S.status==='done'&&!animating())h+=`<div class="ov"><div class="ovc"><div style="font-size:54px">🏆</div><h2>${esc(nm(S,S.winner))} wins!</h2><button id="rm" class="pri" ${S.rematch.includes(S.me)?'disabled':''}>${S.rematch.includes(S.me)?'Waiting for others…':'Rematch'} (${S.rematch.length}/${COLORS.filter(c=>S.players[c]&&S.players[c].on).length})</button><button id="lv2">Leave room</button></div></div>`;
@@ -311,7 +318,7 @@ function render(){
   $('iv').onclick=invite;$('lv').onclick=leave;$('cbtn').onclick=()=>toggleChat(!chatOpen);
   $('mt').onclick=()=>{mute=!mute;ls.set('ludo.mute',mute?'1':'0');unlock();$('mt').textContent=mute?'🔇':'🔊'};
   ['st'].forEach(k=>{if($(k))$(k).onclick=start});if($('inv2'))$('inv2').onclick=invite;app.querySelectorAll('select[data-k]').forEach(el=>el.onchange=()=>socket.emit('rules',{[el.dataset.k]:JSON.parse(el.value)}));if($('lv2'))$('lv2').onclick=leave;if($('rm'))$('rm').onclick=()=>socket.emit('rematch');
-  const dm=$('dice-'+S.me);if(dm&&dm.classList.contains('my'))dm.onclick=rollTap;
+  const dm=$('dice-'+S.me);if(dm&&dm.classList.contains('my')){dm.onclick=rollTap;$('pc-'+S.me).onclick=rollTap}
   if($('bd'))$('bd').onclick=e=>{const g=e.target.closest&&e.target.closest('.tk');if(g)tap(g.dataset.c,+g.dataset.i)};
   drawTokens();updateTimer();
 }
